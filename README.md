@@ -9,7 +9,8 @@
 - mysql2
 
 ## HOX HOX!!
-Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja syöttäkää siihen oman ympäristönne tiedot. Laitan backend kansioon oman .env tiedoston malliksi siistittynä. Lisäilen sinne sitä mukaan muuttujia jos niitä tulee lisää niin voitte kopioida niitä omaanne.
+Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja syöttäkää siihen oman ympäristönne tiedot. Backend kansiossa on .env tiedoston malli. Lisätkää sinne muuttujia jos niitä joudutte omaan ympäristöön luomaan. Siitä on sitte kätevä muiden päivittää omaa .env tiedostoa. **MUISTAJAA POISTAA KAIKKI OMAN YMPÄRISTÖN TIEDOT!!!**
+
 ## RestAPI:t
 ### user
 | Tyyppi | Komento                 | Esimerkki | Body Kentät                 | Selite                                                                           |
