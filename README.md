@@ -4,16 +4,14 @@
 
 # Backend RestAPI
 
-Käytössä olevat Node.JS moduulit:
+## Käytössä olevat Node.JS moduulit:
 - dotenv
 - mysql2
 
-HOX HOX!!
+## HOX HOX!!
 Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja syöttäkää siihen oman ympäristönne tiedot. Laitan backend kansioon oman .env tiedoston malliksi siistittynä. Lisäilen sinne sitä mukaan muuttujia jos niitä tulee lisää niin voitte kopioida niitä omaanne.
-
-- RestAPI
-
-user - RestAPI
+## RestAPI:t
+### user
 | Tyyppi | Komento                 | Esimerkki | Body Kentät                 | Selite                                                                           |
 | ------ | ----------------------- | --------- | --------------------------- | -------------------------------------------------------------------------------- |
 | post   | Lisää käyttäjä          | /user/    | firstname,lastname,pic_path | Luodaan käyttäjätietua user tauluun                                              |
