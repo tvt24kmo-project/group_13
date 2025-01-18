@@ -1,8 +1,8 @@
-const dotenv=require('dotenv');
+// Check modules and create connection to mysql database
+const dotenv = require('dotenv');
 const mysql = require('mysql2');
 
 dotenv.config();
-
 const connection = mysql.createPool(process.env.SQL_SERVER);
 
 module.exports=connection;
