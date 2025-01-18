@@ -15,7 +15,7 @@ router.get('/',function(request, response){
 });
 
 router.get('/:id',function(request, response){
-    user.getAll(request.params.id,function(err,result){
+    user.getById(request.params.id,function(err,result){
         if (err){
             response.json(err);
         }
@@ -27,15 +27,39 @@ router.get('/:id',function(request, response){
 });
 
 router.post('/',function(request,response){
-user.add(request.body,function(err,result){
-    if (err){
-        response.json(err);
+    user.add(request.body,function(err,result){
+        if (err){
+            response.json(err);
+        }
+        else {
+            response.json(result);
+        }
+    })
     }
-    else {
-        response.json(result);
+);
 
+router.post('/:id',function(request,response){
+    user.update(request.params.id,request.body,function(err,result){
+        if (err){
+            response.json(err);
+        }
+        else {
+            response.json(result);
+        }
+    })
     }
-})
-});
+);
+
+router.delete('/:id',function(request,response){
+    user.delete(request.params.id,function(err,result){
+        if (err){
+            response.json(err);
+        }
+        else {
+            response.json(result);
+        }
+    })
+    }
+);
 
 module.exports=router;
