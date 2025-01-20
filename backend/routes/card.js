@@ -1,9 +1,9 @@
 const express = require('express');
+const card = require('../models/card_model');
 const router = express.Router();  
 
-
 router.get('/',function(request,response){
-    user.getAll(request.params.id,function(err,result){
+    card.getAll(request.params.id,function(err,result){
         if (err) {
             response.json(err);
         } else {
@@ -11,10 +11,9 @@ router.get('/',function(request,response){
         }
     });
 });
-
 
 router.get('/:id', function(request, response) { 
-    user.getById(request.params.id, function(err, result) {
+    card.getById(request.params.id, function(err, result) {
         if (err) {
             response.json(err);
         } else {
@@ -23,8 +22,8 @@ router.get('/:id', function(request, response) {
     });
 });
 
-router.post('/', function(request, response) {
-    user.add(request.body, function(err, result) {
+router.post('/', function(request,response){
+    card.add(request.body, function(err,result){
         if (err) {
             response.json(err);
         } else {
@@ -33,8 +32,8 @@ router.post('/', function(request, response) {
     });
 });
 
-router.put('/:id', function(request, response) {  // Muutin POST -> PUT 
-    user.update(request.params.id, request.body, function(err, result) {
+router.put('/:id', function(request, response){
+    card.update(request.params.id, request.body, function(err,result) {
         if (err) {
             response.json(err);
         } else {
@@ -43,8 +42,8 @@ router.put('/:id', function(request, response) {  // Muutin POST -> PUT
     });
 });
 
-router.delete('/:id', function(request, response) {
-    user.delete(request.params.id, function(err, result) {
+router.delete('/:id', function(request, response){
+    card.delete(request.params.id, function(err,result){
         if (err) {
             response.json(err);
         } else {
@@ -53,4 +52,4 @@ router.delete('/:id', function(request, response) {
     });
 });
 
-module.exports = router;
+module.exports=router;
