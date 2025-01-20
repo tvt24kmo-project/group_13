@@ -25,4 +25,4 @@ Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja sy
 
 - MySQL luotuna juuressa olevalla SQL Dumpilla.
 
-![ER Kaavio](../er_kaavio.png)
+![ER Kaavio](er_kaavio.png)
