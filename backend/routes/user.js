@@ -38,7 +38,7 @@ router.post('/',function(request,response){
     }
 );
 
-router.post('/:id',function(request,response){
+router.put('/:id',function(request,response){
     user.update(request.params.id,request.body,function(err,result){
         if (err){
             response.json(err);
