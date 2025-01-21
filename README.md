@@ -1,5 +1,5 @@
 # group_13
-
+<img src ="er_kaavio.png">
 # Frontend / Bank-Automat
 
 # Backend RestAPI
@@ -7,6 +7,7 @@
 ## Käytössä olevat Node.JS moduulit:
 - dotenv
 - mysql2
+-nodemon
 
 ## HOX HOX!!
 Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja syöttäkää siihen oman ympäristönne tiedot. Backend kansiossa on .env tiedoston malli. Lisätkää sinne muuttujia jos niitä joudutte omaan ympäristöön luomaan. Siitä on sitte kätevä muiden päivittää omaa .env tiedostoa. **MUISTAJAA POISTAA KAIKKI OMAN YMPÄRISTÖN TIEDOT!!!**

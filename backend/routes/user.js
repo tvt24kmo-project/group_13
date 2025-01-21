@@ -8,7 +8,7 @@ router.get('/',function(request, response){
             response.json(err);
         }
         else {
-            response.json(result);
+            response.json(result[0]);
 
         }
     })
@@ -20,7 +20,7 @@ router.get('/:id',function(request, response){
             response.json(err);
         }
         else {
-            response.json(result);
+            response.json(result.affectedRows);
 
         }
     })
@@ -32,19 +32,19 @@ router.post('/',function(request,response){
             response.json(err);
         }
         else {
-            response.json(result);
+            response.json(result.affectedRows);
         }
     })
     }
 );
 
-router.post('/:id',function(request,response){
+router.put('/:id',function(request,response){
     user.update(request.params.id,request.body,function(err,result){
         if (err){
             response.json(err);
         }
         else {
-            response.json(result);
+            response.json(result.affectedRows);
         }
     })
     }
