@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const user = require('../models/user_model');
+const account = require('../models/account_model');
 
 router.get('/',function(request, response){
-    user.getAll(function(err,result){
+    account.getAll(function(err,result){
         if (err){
             response.json(err);
         }
@@ -15,7 +15,19 @@ router.get('/',function(request, response){
 });
 
 router.get('/:id',function(request, response){
-    user.getById(request.params.id,function(err,result){
+    account.getById(request.params.id,function(err,result){
+        if (err){
+            response.json(err);
+        }
+        else {
+            response.json(result);
+
+        }
+    })
+});
+
+router.get('/user/:id',function(request, response){
+    account.getByUserId(request.params.id,function(err,result){
         if (err){
             response.json(err);
         }
@@ -27,7 +39,7 @@ router.get('/:id',function(request, response){
 });
 
 router.post('/',function(request,response){
-    user.add(request.body,function(err,result){
+    account.add(request.body,function(err,result){
         if (err){
             response.json(err);
         }
@@ -39,7 +51,7 @@ router.post('/',function(request,response){
 );
 
 router.put('/:id',function(request,response){
-    user.update(request.params.id,request.body,function(err,result){
+    account.update(request.params.id,request.body,function(err,result){
         if (err){
             response.json(err);
         }
@@ -51,7 +63,7 @@ router.put('/:id',function(request,response){
 );
 
 router.delete('/:id',function(request,response){
-    user.delete(request.params.id,function(err,result){
+    account.delete(request.params.id,function(err,result){
         if (err){
             response.json(err);
         }
