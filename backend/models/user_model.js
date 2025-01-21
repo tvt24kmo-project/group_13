@@ -1,3 +1,4 @@
+
 const db=require('../database');
 
 const user = {
@@ -12,6 +13,7 @@ const user = {
     add:function(user_data,callback){
         return db.query('INSERT INTO user (firstname,lastname,pic_path) VALUES(?,?,?)',[user_data.firstname,user_data.lastname,user_data.pic_path],callback);   
     },
+
 
     delete:function(id,callback){
         return db.query('DELETE FROM user WHERE id_user=?',[id],callback);

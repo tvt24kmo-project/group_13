@@ -5,7 +5,12 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var userRouter = require('./routes/user');
+
 var accountRouter = require('./routes/account');
+
+var cardAccountRouter = require('./routes/card_account');
+var cardRouter = require('./routes/card');
+
 
 var app = express();
 
@@ -17,6 +22,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/user', userRouter);
+
 app.use('/account', accountRouter);
+
+app.use('/card_account', cardAccountRouter);
+app.use('/card',cardRouter);
+
 
 module.exports = app;
