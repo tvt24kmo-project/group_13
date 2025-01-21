@@ -1,1 +1,0 @@
-SQL_SERVER = 'mysql://user:pass@localhost:3306/bank-automat'
