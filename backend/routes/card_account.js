@@ -1,14 +1,25 @@
 const express=require('express');
 const router=express.Router();
+const card_account = require('../models/card_account_model');
 
 router.get('/',function(request,response){
-    card_account.getAll(request.params.id,function(err,result){
+    card_account.getAll(function(err,result){
         if (err) {
         response.json(err);
         } else {
         response.json(result);
         }
-    });
+    })
+});
+
+router.get('/:id',function(request,response){
+    card_account.getById(request.params.id,function(err,result){
+        if (err) {
+        response.json(err);
+        } else {
+        response.json(result);
+        }
+    })
 });
 
 router.post('/',function(request, response){
@@ -28,7 +39,7 @@ router.put('/:id', function(request, response) {
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
 router.delete('/:id', function(request, response) {
@@ -38,7 +49,7 @@ router.delete('/:id', function(request, response) {
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
 module.exports = router;
