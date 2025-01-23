@@ -1,25 +1,25 @@
 const express = require('express');
+const router = express.Router();
 const card = require('../models/card_model');
-const router = express.Router();  
 
 router.get('/',function(request,response){
-    card.getAll(request.params.id,function(err,result){
+    card.getAll(function(err,result){
         if (err) {
             response.json(err);
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
-router.get('/:id', function(request, response) { 
-    card.getById(request.params.id, function(err, result) {
+router.get('/:id',function(request, response) { 
+    card.getById(request.params.id,function(err, result){
         if (err) {
             response.json(err);
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
 router.post('/', function(request,response){
@@ -29,7 +29,7 @@ router.post('/', function(request,response){
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
 router.put('/:id', function(request, response){
@@ -39,7 +39,7 @@ router.put('/:id', function(request, response){
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
 router.delete('/:id', function(request, response){
@@ -49,7 +49,7 @@ router.delete('/:id', function(request, response){
         } else {
             response.json(result);
         }
-    });
+    })
 });
 
 module.exports=router;

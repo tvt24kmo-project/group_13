@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const user = require('../models/user_model');
 
-router.get('/',function(request, response){
+router.get('/',function(request,response){
     user.getAll(function(err,result){
         if (err){
             response.json(err);
