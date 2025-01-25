@@ -34,6 +34,29 @@ Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja sy
 | get    | Hae tiettyä tiliä       | /account/1      |                              | Hakee account taulusta tilitietueen id_account:n perusteella                    |
 | get    | Hae tietyn userin tilit | /account/user/1 |                              | Hakee account taulusta tietyn userin tilitietueet id_user:n perusteella         |
 
+
+### card_account
+
+| Tyyppi | Komento                       | Esimerkki            | Body Kentät                    | Selite                                                                                      |
+| ------ | -----------------------       | ---------------      | ------------------------       | -------------------------------------------------------------------------------             |
+| post   | Lisää korttitili              | /card_account/       | id_card,id_account,account_type| Luodaan korttitilitietue card_account tauluun                                               |
+| put    | Päivitä korttitilin tiedot    | /card_account/1      | id_card,id_account,account_type| Päivitetään korttitilitietueen tietoja                                                      |
+| delete | Poista korttitili             | /card_account/1      |                                | Poistetaan korttitilitietue ID:n perusteella                                                |
+| get    | Hae kaikki korttitilit        | /card_account/       |                                | Hakee kaikki card_account taulussa olevat korttitilitietueet ja palauttaa ne json muodossa  |
+| get    | Hae tiettyä korttitiliä       | /card_account/1      |                                | Hakee card_account taulusta korttitilitietueen id_card_account:n perusteella                |
+
+
+### card
+
+| Tyyppi | Komento                 | Esimerkki    | Body Kentät                  | Selite                                                                          |
+| ------ | ----------------------- | -------------| ---------------------------- | ------------------------------------------------------------------------------- |
+| post   | Lisää kortti            | /card/       | type,card_number,pin,retrys  | Luodaan korttitietue card tauluun                                               |
+| put    | Päivitä tilin tiedot    | /card/1      | type,card_number,pin,retrys  | Päivitetään korttitietueen tietoja                                              |
+| delete | Poista kortti           | /card/1      |                              | Poistetaan korttitietue ID:n perusteella                                        |
+| get    | Hae kaikki kortit       | /card/       |                              | Hakee kaikki card taulussa olevat korttitietueet ja palauttaa ne json muodossa  |
+| get    | Hae tiettyä korttia     | /card/1      |                              | Hakee card taulusta tilitietueen id_card:n perusteella                          |
+
+
 # Database
 
 - MySQL luotuna juuressa olevalla SQL Dumpilla.
