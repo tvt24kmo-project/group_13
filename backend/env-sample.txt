@@ -1,3 +1,0 @@
-# Tänne kaikki käytössä olevat ympäristö muuttujat.
-# MUISTAKAA POISTAA KAIKKI VIITTAUKSET OMAAN YMPÄRISTÖÖN. Salasanat, käyttäjätunnukset ja IP osoitteet jos ne ovat julkisia osoitteita.
-SQL_SERVER = 'mysql://user:pass@localhost:3306/bank-automat'
