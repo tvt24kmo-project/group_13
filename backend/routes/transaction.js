@@ -74,4 +74,15 @@ router.delete('/:id',function(request,response){
     }
 );
 
+router.get('/account/:id_account',function(request, response){
+    transaction.getByAccount(request.params.id_account,function(err,result){
+        if (err){
+            response.json(err);
+        }
+        else {
+            response.json(result);
+
+        }
+    })
+});
 module.exports=router;  

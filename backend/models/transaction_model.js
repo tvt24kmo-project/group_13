@@ -8,14 +8,17 @@ const transaction = {
     getById:function(id,callback){
         return db.query('SELECT * FROM transaction WHERE id_transaction=?',[id],callback);
     },
+    getByAccount:function(id_account,callback){
+        return db.query('SELECT * FROM transaction WHERE id_account=?',[id_account],callback);
+    },
 
    
 
     add:function(transaction_data,callback){
-        return db.query('INSERT INTO transaction (transaction_type, sum, date, type,id_account) VALUES(?,?,?,?,?)',
+        return db.query('INSERT INTO transaction (transaction_type, sum, type,id_account) VALUES(?,?,?,?)',
             [transaction_data.transaction_type,
                 transaction_data.sum,
-                transaction_data.date,
+            
                 transaction_data.type,
             transaction_data.id_account],callback);   
     },
@@ -25,13 +28,15 @@ const transaction = {
     },
 
     update:function(id,transaction_data,callback){
-        return db.query('UPDATE transaction SET transaction_type=?, sum=?,date=?, type=?,id_account=? WHERE id_transaction=?',
+        return db.query('UPDATE transaction SET transaction_type=?, sum=?, type=?,id_account=? WHERE id_transaction=?',
             [transaction_data.transaction_type,
                 transaction_data.sum,
-                transaction_data.date,
+                
                 transaction_data.type,
                 transaction_data.id_account,id],callback);
     }
+
+
 };
 
 module.exports=transaction;
