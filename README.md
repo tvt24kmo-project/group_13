@@ -60,5 +60,30 @@ Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja sy
 # Database
 
 - MySQL luotuna juuressa olevalla SQL Dumpilla.
+### transaction
+
+transaction
+Tyyppi |	Komento           |   	Esimerkki       | 	Body                 |          	        Selite  
+
+post   |	Lisää tapahtuma   |	/transaction/	    |transaction_type,       |  	Luodaan tapahtumatietue transaction-tauluun
+                                                    |sum, type, id_account   |   
+
+
+put	   |Päivitä tapahtuman    | /transaction/1	    |transaction_type,       |  Päivitetään tietoja ID:n                              
+       |                       |                    |sum,type,id_account     |      perustella
+
+delete |Poista tapahtuma	  | /transaction/1		|                        |       Poistetaan tapahtumatietue ID:n perusteella
+
+get	   |Hae kaikki tapahtumat |  /transaction/		|                        |   Hakee kaikki transaction-taulussa olevat tapahtumatietueet 
+                        
+
+get	   | Hae tietty tapahtuma |  /transaction/1		|                        | Hakee transaction-taulusta tapahtumatietueen ID:n perusteella
+
+
+get	   | Hae tietyn tilin     |/transaction/account/1|	                      |Hakee  tietyn tilin tapahtumatietueet id_account:n perusteella
+        tapahtumat
+
+**** date tulee automasisesti , eli ei tarvi täytää body kenttä.
 
 ![ER Kaavio](er_kaavio.png)
+
