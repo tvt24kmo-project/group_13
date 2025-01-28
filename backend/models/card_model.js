@@ -12,7 +12,21 @@ const card = {
         return db.query('SELECT * FROM card', callback);
     },
     getById:function(id,callback){
-        return db.query('SELECT * FROM card WHERE id_card=?', [id],callback);
+        console.log('Fetching card by ID:', id);
+        const query = `
+            SELECT card.*, card_account.id_account 
+            FROM card 
+            JOIN card_account ON card.id_card = card_account.id_card 
+            WHERE card.id_card = ?
+        `;
+        db.query(query, [id], function(err, results) {
+            if (err) {
+                console.error('Database query error:', err);
+                return callback(err);
+            }
+            console.log('Card query results:', results);
+            callback(null, results);
+        });
     },
 
     getByType: function(type, callback) {
@@ -67,6 +81,40 @@ return db.query('UPDATE card SET `type`=?, retrys=? WHERE id_card=?',[card_data.
 
 checkPin:function(card_number,callback){
     return db.query('SELECT pin FROM card WHERE card_number=?',[card_number],callback);
+},
+
+getUserAssets: function(card_number, callback) {
+    const query = `
+        SELECT account.id_account 
+        FROM card_account 
+        JOIN account ON card_account.id_account = account.id_account
+        JOIN card ON card_account.id_card = card.id_card
+        WHERE card.card_number = ?
+    `;
+    db.query(query, [card_number], function(err, results) {
+        if (err) {
+            return callback(err);
+        }
+        callback(null, results);
+    });
+},
+
+getByCardNumber: function(card_number, callback) {
+    const query = `
+        SELECT card.*, user.id_user 
+        FROM card 
+        JOIN card_account ON card.id_card = card_account.id_card 
+        JOIN account ON card_account.id_account = account.id_account 
+        JOIN user ON account.id_user = user.id_user 
+        WHERE card.card_number = ?
+    `;
+    db.query(query, [card_number], function(err, results) {
+        if (err) {
+            console.error('Database query error:', err);
+            return callback(err);
+        }
+        callback(null, results);
+    });
 }
 }
     //HOX. TUOSSA YLEMPÄNÄ ON SE getbytype-metodi. //tässä tosiaan tämä joka huomioi korttien tyypit, että pystytään etsimään tietokannasta joko double-korttia,

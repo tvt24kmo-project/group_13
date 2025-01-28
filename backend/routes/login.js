@@ -5,54 +5,76 @@ const card = require('../models/card_model');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 
+/**
+ * @swagger
+ * tags:
+ *   name: Login
+ *   description: User login
+ */
 
-router.post('/',
-    function(request, response) {
-        if(request.body.card_number && request.body.pin){ //tarkistetaan että käyttäjä antaa kortin numeron ja PIN-koodin.
-            const card_number = request.body.card_number;  
-            const pin = request.body.pin;
-                                                                                //^eli jos molemmat annettu edetään.
-            card.checkPin(card_number, function(dbError, dbResult) { //haetaan kortin PIN tietokannasta card_modelin kautta.
-                if(dbError){ 
-                    response.json(dbError);
-                }
-                else{
-                    if (dbResult.length > 0) {  
-                        bcrypt.compare(pin,dbResult[0].pin, function
-                            (err,compareResult){   //vaikka on sama pin, se kryptattu versio on aina ihan erilainen.
-                                                //// Compare-funktiolla testataan onko true vai false verrattaessa kryptattua versiota ja annettua PIN-koodia.
-                                                //dbResult[0] on tietokannasta saatu kryptattu pin.> success> generoidaan token vastauksena.
-                            if(compareResult) {
-                                console.log("Success");
-                                const token = generateAccessToken({card_number:
-                                card_number});
-                                response.send(token);
-                            } 
-                            else {
-                                console.log("wrong PIN");
-                                response.send(false);
-                            }
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: User login
+ *     tags: [Login]
+ *     security:
+ *       - card: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               card_number:
+ *                 type: string
+ *               pin:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 card_number:
+ *                   type: string
+ */
+router.post('/', function(request, response) {
+    if (request.body.card_number && request.body.pin) {
+        const card_number = request.body.card_number;
+        const pin = request.body.pin;
+        card.checkPin(card_number, function(dbError, dbResult) {
+            if (dbError) {
+                response.json(dbError);
+            } else {
+                if (dbResult.length > 0) {
+                    bcrypt.compare(pin, dbResult[0].pin, function(err, compareResult) {
+                        if (compareResult) {
+                            const token = generateAccessToken({ card_number: card_number, role: 'user' }, '1800s');
+                            response.send({ token: token, card_number: card_number });
+                        } else {
+                            response.send(false);
                         }
-                    );
-                }
-                else{
-                    console.log("Card not found");
+                    });
+                } else {
                     response.send(false);
                 }
             }
-        }
-    );
-}
-else{
-    console.log("Card number or PIN missing"); 
-    response.send(false);
-}
-}
-);
+        });
+    } else {
+        response.send(false);
+    }
+});
 
-function generateAccessToken(card) { //tässä on se token-funcktio.
-dotenv.config();
-return jwt.sign(card, process.env.MY_TOKEN, {expiresIn: '1800s'}); //kun loginin jälkeen aika on umpeutunut, pitää taas kirjautua uudelleen.(tämä on voimassa 30 minuuttia, tätä aikaa voi pienentää.) //täällä on My-token niinku app.js:ssäkin.  
+function generateAccessToken(user, expiresIn) {
+    dotenv.config();
+    const token = jwt.sign(user, process.env.MY_TOKEN, { expiresIn: expiresIn });
+    return token;
 }
 
-module.exports=router;
+module.exports = router;
