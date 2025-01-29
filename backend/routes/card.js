@@ -12,6 +12,19 @@ router.get('/',function(request,response){
     })
 });
 
+// Etsii kortit tyypin mukaan (debit, credit, double)
+router.get('/type/:type', function(request, response) {
+    const cardType = request.params.type;
+
+    card.getByType(cardType, function(err, result) {
+        if (err) {
+            response.json(err);
+        } else {
+            response.json(result);
+        }
+    });
+});
+
 router.get('/:id',function(request, response) { 
     card.getById(request.params.id,function(err, result){
         if (err) {
