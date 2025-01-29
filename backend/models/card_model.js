@@ -2,6 +2,10 @@ const db=require('../database');
 const bcrypt = require('bcrypt');//otetaan käyttöön bcrypt-kirjasto. pitäisi löytyä sitten npm install -komennon myötä. jos ei, niin sen voi ladata erikseen.
 
 const card = {
+    //checkPin:function(card_number, callback){
+      //  return db.query('SELECT id_card, pin FROM card WHERE card_number=?' ,[card_number],callback);  //käyttäjä antaa loginformiin card numberin ja PIN-koodin-> tämä card_number annetaan tälle
+                                                                                                //  kyselylle joka sit palauttaa kyseisen..cryptatun PIN-koodin sieltä tietokannasta.
+        //},
     getAll:function(callback){
         return db.query('SELECT * FROM card', callback);
     },
@@ -36,7 +40,10 @@ return db.query('UPDATE card SET `type`=?, retrys=? WHERE id_card=?',[card_data.
     },
     delete:function(id,callback){
         return db.query('DELETE FROM card WHERE id_card=?',[id],callback);
-    }
-};
+    },
 
+checkPin:function(card_number,callback){
+    return db.query('SELECT pin FROM card WHERE card_number=?',[card_number],callback);
+}
+}
 module.exports=card;

@@ -85,5 +85,17 @@ get	   | Hae tietyn tilin     |/transaction/account/1|	                      |Ha
 
 **** date tulee automasisesti , eli ei tarvi täytää body kenttä.
 
+### login
+
+| Tyyppi | Komento      | Esimerkki | Body Kentät       | Selite                                                   |
+| ------ | -------------| ----------| ------------------| ---------------------------------------------------------|
+| post   | check pin    | /login    | card_number , pin | kirjaudutaan sisään käyttäen card_numberia ja pin-koodia.|
+|        |              |           |                   |                                                          |                                                                                              |        |              |           |                   |                                                          |
+|        |              |           |                   |                                                          |
+|        |              |           |                   |                                                          |
+|        |              |           |                   |                                                          |
+
+
+
 ![ER Kaavio](er_kaavio.png)
 
