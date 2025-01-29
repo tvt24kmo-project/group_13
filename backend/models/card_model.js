@@ -2,10 +2,12 @@ const db=require('../database');
 const bcrypt = require('bcrypt');//otetaan käyttöön bcrypt-kirjasto. pitäisi löytyä sitten npm install -komennon myötä. jos ei, niin sen voi ladata erikseen.
 
 const card = {
+
     checkPin:function(card_number, callback){
         return db.query('SELECT id_card, pin FROM card WHERE card_number=?' ,[card_number],callback);  //käyttäjä antaa loginformiin card numberin ja PIN-koodin-> tämä card_number annetaan tälle
                                                                                                 //  kyselylle joka sit palauttaa kyseisen..cryptatun PIN-koodin sieltä tietokannasta.
         },
+
     getAll:function(callback){
         return db.query('SELECT * FROM card', callback);
     },
@@ -60,13 +62,14 @@ return db.query('UPDATE card SET `type`=?, retrys=? WHERE id_card=?',[card_data.
     },
     delete:function(id,callback){
         return db.query('DELETE FROM card WHERE id_card=?',[id],callback);
-    }
 
+    },
 
-
+checkPin:function(card_number,callback){
+    return db.query('SELECT pin FROM card WHERE card_number=?',[card_number],callback);
+}
+}
     //HOX. TUOSSA YLEMPÄNÄ ON SE getbytype-metodi. //tässä tosiaan tämä joka huomioi korttien tyypit, että pystytään etsimään tietokannasta joko double-korttia,
     //  tai credit tai debit-korttia. Lisäsin tietokantaan type-kohtaan credit, debit, double. Yritin postmanissa lähettää sitten niitä tietoja silleen, että URL-polussa olisi kerrottu 
     // mikä kortti kyseessä. Laitoin myös loginiin ja add-cardiin postmanissa JSONia, jossa luki korttinumero, pinkoodi, janiin edelleen. Tämä koodi siis teille tutkittavaksi!
-
-};
 module.exports=card;
