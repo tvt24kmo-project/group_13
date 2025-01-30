@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, restrictToUserAssets, restrictToAdmin } = require('../middleware/auth_middleware');
 const transaction = require('../models/transaction_model');
+const logger = require('../logger'); // Import logger
 
 router.use(verifyToken);
 router.use(restrictToUserAssets);
@@ -41,13 +42,15 @@ router.use(restrictToUserAssets);
 router.get('/account/:id_account', function(request, response) {
     const accountId = parseInt(request.params.id_account, 10);
     if (!request.user.assets.accounts.includes(accountId)) {
+        logger.warn(`Access denied for account ID: ${accountId}`);
         return response.status(403).send('Access denied');
     }
     transaction.getByAccount(accountId, function(err, result) {
         if (err) {
-            console.error('Error fetching user transactions:', err);
+            logger.error(`Error fetching user transactions: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Fetched transactions for account ID: ${accountId}`);
             response.json(result);
         }
     });

@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const card_account = require('../models/card_account_model');
+const { verifyToken, restrictToUserAssets, checkCardAccess, restrictToAdmin } = require('../middleware/auth_middleware');
+const cardAccount = require('../models/card_account_model');
+const logger = require('../logger'); // Import logger
+
+router.use(verifyToken);
+router.use(restrictToUserAssets);
 
 /**
  * @swagger
  * tags:
  *   name: CardAccount
- *   description: Card Account management
+ *   description: Card account management
  */
 
 /**
@@ -15,6 +20,8 @@ const card_account = require('../models/card_account_model');
  *   get:
  *     summary: Get all card accounts
  *     tags: [CardAccount]
+ *     security:
+ *       - user: []
  *     responses:
  *       200:
  *         description: A list of card accounts
@@ -25,11 +32,13 @@ const card_account = require('../models/card_account_model');
  *               items:
  *                 type: object
  */
-router.get('/', function(request, response) {
-    card_account.getAll(function(err, result) {
+router.get('/', checkCardAccess, function(request, response) {
+    cardAccount.getAll(function(err, result) {
         if (err) {
+            logger.error(`Error fetching card accounts: ${err}`);
             response.json(err);
         } else {
+            logger.info('Fetched all card accounts');
             response.json(result);
         }
     });
@@ -41,6 +50,8 @@ router.get('/', function(request, response) {
  *   get:
  *     summary: Get card account by ID
  *     tags: [CardAccount]
+ *     security:
+ *       - user: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -56,11 +67,13 @@ router.get('/', function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', function(request, response) {
-    card_account.getById(request.params.id, function(err, result) {
+router.get('/:id', checkCardAccess, function(request, response) {
+    cardAccount.getById(request.params.id, function(err, result) {
         if (err) {
+            logger.error(`Error fetching card account by ID: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Fetched card account by ID: ${request.params.id}`);
             response.json(result);
         }
     });
@@ -72,6 +85,8 @@ router.get('/:id', function(request, response) {
  *   post:
  *     summary: Add a new card account
  *     tags: [CardAccount]
+ *     security:
+ *       - admin: []
  *     requestBody:
  *       required: true
  *       content:
@@ -83,6 +98,8 @@ router.get('/:id', function(request, response) {
  *                 type: integer
  *               id_account:
  *                 type: integer
+ *               account_type:
+ *                 type: string
  *     responses:
  *       200:
  *         description: The created card account
@@ -91,11 +108,13 @@ router.get('/:id', function(request, response) {
  *             schema:
  *               type: object
  */
-router.post('/', function(request, response) {
-    card_account.add(request.body, function(err, result) {
+router.post('/', restrictToAdmin, function(request, response) {
+    cardAccount.add(request.body, function(err, result) {
         if (err) {
+            logger.error(`Error adding card account: ${err}`);
             response.json(err);
         } else {
+            logger.info('Added new card account');
             response.json(result);
         }
     });
@@ -107,6 +126,8 @@ router.post('/', function(request, response) {
  *   put:
  *     summary: Update a card account
  *     tags: [CardAccount]
+ *     security:
+ *       - admin: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -125,6 +146,8 @@ router.post('/', function(request, response) {
  *                 type: integer
  *               id_account:
  *                 type: integer
+ *               account_type:
+ *                 type: string
  *     responses:
  *       200:
  *         description: The updated card account
@@ -133,11 +156,13 @@ router.post('/', function(request, response) {
  *             schema:
  *               type: object
  */
-router.put('/:id', function(request, response) {
-    card_account.update(request.params.id, request.body, function(err, result) {
+router.put('/:id', restrictToAdmin, function(request, response) {
+    cardAccount.update(request.params.id, request.body, function(err, result) {
         if (err) {
+            logger.error(`Error updating card account: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Updated card account with ID: ${request.params.id}`);
             response.json(result);
         }
     });
@@ -149,6 +174,8 @@ router.put('/:id', function(request, response) {
  *   delete:
  *     summary: Delete a card account
  *     tags: [CardAccount]
+ *     security:
+ *       - admin: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -164,11 +191,13 @@ router.put('/:id', function(request, response) {
  *             schema:
  *               type: object
  */
-router.delete('/:id', function(request, response) {
-    card_account.delete(request.params.id, function(err, result) {
+router.delete('/:id', restrictToAdmin, function(request, response) {
+    cardAccount.delete(request.params.id, function(err, result) {
         if (err) {
+            logger.error(`Error deleting card account: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Deleted card account with ID: ${request.params.id}`);
             response.json(result);
         }
     });

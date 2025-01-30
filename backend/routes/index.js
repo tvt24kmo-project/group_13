@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../logger'); // Import logger
 
 /**
  * @swagger
@@ -25,6 +26,7 @@ const router = express.Router();
  *               type: string
  */
 router.get('/', function(req, res, next) {
+    logger.info('Accessed index route');
     res.send('Welcome to the Bank Automat API');
 });
 

@@ -1,7 +1,8 @@
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+var morgan = require('morgan');
+var logger = require('./logger'); // Import logger
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const adminRouter = require('./routes/admin_login');
@@ -20,7 +21,7 @@ var adminLoginRouter = require('./routes/admin_login');
 
 var app = express();
 
-app.use(logger('dev'));
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

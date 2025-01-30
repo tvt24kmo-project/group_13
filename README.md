@@ -17,6 +17,8 @@
 - mysql2
 - swagger-jsdoc
 - swagger-ui-express
+- winston
+- winston-daily-rotate-file
 - nodemon (devDependencies)
 
 ## HOX HOX!!
@@ -92,5 +94,6 @@ Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja sy
 
 Swagger-dokumentaatio on saatavilla osoitteessa `http://localhost:<portti>/api-docs`, jossa `<portti>` on palvelimen käyttämä portti. Swaggerin avulla voit tarkastella ja testata API-pyyntöjä helposti selaimessa.
 
-![ER Kaavio](er_kaavio.png)
+## ER-Kaavio
 
+![ER Kaavio](er_kaavio.png)

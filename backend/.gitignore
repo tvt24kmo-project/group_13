@@ -3,3 +3,4 @@ bank-automat/build/
 bank-automat/*.user
 
 backend/.env
+logs/

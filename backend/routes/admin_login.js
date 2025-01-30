@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const admin = require('../models/admin_model');
+const logger = require('../logger'); // Import logger
 dotenv.config();
 
 /**
@@ -48,20 +49,25 @@ router.post('/', function(request, response) {
 
     admin.getByUsername(username, function(err, dbResult) {
         if (err) {
+            logger.error(`Database error: ${err}`);
             return response.status(500).json(err);
         }
         if (dbResult.length === 0) {
+            logger.warn(`Invalid credentials: username not found for ${username}`);
             return response.status(403).json({ error: 'Invalid credentials' });
         }
 
         bcrypt.compare(password, dbResult[0].password, function(err, compareResult) {
             if (err) {
+                logger.error(`Bcrypt error: ${err}`);
                 return response.status(500).json(err);
             }
             if (compareResult) {
                 const token = generateAccessToken({ username: username, role: 'admin' }, '3600s');
+                logger.info(`Admin logged in with username ${username}`);
                 response.json({ token: token });
             } else {
+                logger.warn(`Invalid credentials: password mismatch for ${username}`);
                 response.status(403).json({ error: 'Invalid credentials' });
             }
         });

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, restrictToUserAssets, checkUserAccess, restrictToAdmin } = require('../middleware/auth_middleware');
 const user = require('../models/user_model');
+const logger = require('../logger'); // Import logger
 
 router.use(verifyToken);
 router.use(restrictToUserAssets);
@@ -34,8 +35,10 @@ router.use(restrictToUserAssets);
 router.get('/', checkUserAccess, function(request, response) {
     user.getAll(function(err, result) {
         if (err) {
+            logger.error(`Error fetching users: ${err}`);
             response.json(err);
         } else {
+            logger.info('Fetched all users');
             response.json(result);
         }
     });

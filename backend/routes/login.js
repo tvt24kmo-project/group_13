@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const card = require('../models/card_model');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const logger = require('../logger'); // Import logger
 
 /**
  * @swagger
@@ -50,23 +51,28 @@ router.post('/', function(request, response) {
         const pin = request.body.pin;
         card.checkPin(card_number, function(dbError, dbResult) {
             if (dbError) {
+                logger.error(`Error checking PIN for card number ${card_number}: ${dbError}`);
                 response.json(dbError);
             } else {
                 if (dbResult.length > 0) {
                     bcrypt.compare(pin, dbResult[0].pin, function(err, compareResult) {
                         if (compareResult) {
                             const token = generateAccessToken({ card_number: card_number, role: 'user' }, '1800s');
+                            logger.info(`User logged in with card number ${card_number}`);
                             response.send({ token: token, card_number: card_number });
                         } else {
+                            logger.warn(`Wrong PIN for card number ${card_number}`);
                             response.send(false);
                         }
                     });
                 } else {
+                    logger.warn(`Card not found for card number ${card_number}`);
                     response.send(false);
                 }
             }
         });
     } else {
+        logger.warn('Card number or PIN missing');
         response.send(false);
     }
 });
