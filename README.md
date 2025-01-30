@@ -82,5 +82,15 @@ Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja sy
 | ------ | -------------| ----------| ------------------| ---------------------------------------------------------|
 | post   | check pin    | /login    | card_number, pin  | Kirjaudutaan sisään käyttäen card_numberia ja pin-koodia.|
 
+### admin_login
+
+| Tyyppi | Komento      | Esimerkki       | Body Kentät       | Selite                                                   |
+| ------ | -------------| ----------------| ------------------| ---------------------------------------------------------|
+| post   | admin login  | /admin_login    | username, password | Kirjaudutaan sisään admin-käyttäjänä käyttäen usernamea ja passwordia.|
+
+## Swaggerin käyttö
+
+Swagger-dokumentaatio on saatavilla osoitteessa `http://localhost:<portti>/api-docs`, jossa `<portti>` on palvelimen käyttämä portti. Swaggerin avulla voit tarkastella ja testata API-pyyntöjä helposti selaimessa.
+
 ![ER Kaavio](er_kaavio.png)
 
