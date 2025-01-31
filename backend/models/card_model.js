@@ -6,8 +6,7 @@ const card = {
     checkPin:function(card_number, callback){
         return db.query('SELECT id_card, pin FROM card WHERE card_number=?' ,[card_number],callback);  //käyttäjä antaa loginformiin card numberin ja PIN-koodin-> tämä card_number annetaan tälle
                                                                                                 //  kyselylle joka sit palauttaa kyseisen..cryptatun PIN-koodin sieltä tietokannasta.
-        },
-
+        },   
     getAll:function(callback){
         return db.query('SELECT * FROM card', callback);
     },
