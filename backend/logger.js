@@ -10,6 +10,7 @@ const logFormat = printf(({ level, message, timestamp }) => {
 });
 
 const logger = createLogger({
+    level: 'info',
     format: combine(
         timestamp(),
         logFormat
@@ -19,12 +20,25 @@ const logger = createLogger({
             filename: 'log-%DATE%.txt',
             dirname: process.env.LOG_PATH || './logs',
             datePattern: 'YYYY-MM-DD',
-            maxSize: '5m',
-            maxFiles: '14d', // Säilytä lokitiedostot 14 päivää
+            maxSize: '50m',
+            maxFiles: '14d',
             zippedArchive: true,
         }),
         new transports.Console()
     ]
 });
 
-module.exports = logger;
+function logRequests(req, res, next) {
+    const { method, url, body, headers } = req;
+    logger.info(`Request: ${method} ${url} - Body: ${JSON.stringify(body)} - Headers: ${JSON.stringify(headers)}`);
+
+    const originalSend = res.send;
+    res.send = function (data) {
+        logger.info(`Response: ${method} ${url} - Status: ${res.statusCode} - Body: ${data}`);
+        originalSend.apply(res, arguments);
+    };
+
+    next();
+}
+
+module.exports = { logger, logRequests };

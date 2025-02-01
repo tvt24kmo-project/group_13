@@ -4,3 +4,4 @@ bank-automat/*.user
 
 backend/.env
 logs/
+combined.log

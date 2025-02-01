@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-const mysql = require('mysql2');
+const mysql = require('mysql2'); // Use the normal version
 
 dotenv.config();
 const connection = mysql.createPool({

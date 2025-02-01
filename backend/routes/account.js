@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, restrictToUserAssets, checkAccountAccess, restrictToAdmin } = require('../middleware/auth_middleware');
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
 const account = require('../models/account_model');
 
 router.use(verifyToken);
-router.use(restrictToUserAssets);
 
 /**
  * @swagger
@@ -20,7 +19,7 @@ router.use(restrictToUserAssets);
  *     summary: Get all accounts
  *     tags: [Account]
  *     security:
- *       - user: []
+ *       - adminBearerAuth: []
  *     responses:
  *       200:
  *         description: A list of accounts
@@ -29,12 +28,14 @@ router.use(restrictToUserAssets);
  *             schema:
  *               type: array
  *               items:
- *                 type: object
+ *                 $ref: '#/components/schemas/Account'
+ *       500:
+ *         description: Internal server error
  */
-router.get('/', checkAccountAccess, function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) {
     account.getAll(function(err, result) {
         if (err) {
-            response.json(err);
+            response.status(500).json({ error: 'Internal server error' });
         } else {
             response.json(result);
         }
@@ -48,7 +49,7 @@ router.get('/', checkAccountAccess, function(request, response) {
  *     summary: Get account by ID
  *     tags: [Account]
  *     security:
- *       - user: []
+ *       - adminBearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -62,14 +63,20 @@ router.get('/', checkAccountAccess, function(request, response) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Account'
+ *       404:
+ *         description: Account not found
+ *       500:
+ *         description: Internal server error
  */
-router.get('/:id', checkAccountAccess, function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) {
     account.getById(request.params.id, function(err, result) {
         if (err) {
-            response.json(err);
+            response.status(500).json({ error: 'Internal server error' });
+        } else if (result.length === 0) {
+            response.status(404).json({ error: 'Account not found' });
         } else {
-            response.json(result);
+            response.json(result[0]);
         }
     });
 });
@@ -81,7 +88,7 @@ router.get('/:id', checkAccountAccess, function(request, response) {
  *     summary: Get accounts by user ID
  *     tags: [Account]
  *     security:
- *       - user: []
+ *       - admin: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -99,7 +106,7 @@ router.get('/:id', checkAccountAccess, function(request, response) {
  *               items:
  *                 type: object
  */
-router.get('/user/:id', checkAccountAccess, function(request, response) {
+router.get('/user/:id', restrictToAdmin, function(request, response) {
     account.getByUserId(request.params.id, function(err, result) {
         if (err) {
             response.json(err);
@@ -116,36 +123,31 @@ router.get('/user/:id', checkAccountAccess, function(request, response) {
  *     summary: Add a new account
  *     tags: [Account]
  *     security:
- *       - admin: []
+ *       - adminBearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               amount:
- *                 type: number
- *               limit:
- *                 type: number
- *               balance:
- *                 type: number
- *               id_user:
- *                 type: integer
+ *             $ref: '#/components/schemas/Account'
  *     responses:
- *       200:
+ *       201:
  *         description: The created account
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Account'
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
  */
 router.post('/', restrictToAdmin, function(request, response) {
     account.add(request.body, function(err, result) {
         if (err) {
-            response.json(err);
+            response.status(500).json({ error: 'Internal server error' });
         } else {
-            response.json(result);
+            response.status(201).json(result);
         }
     });
 });
@@ -157,7 +159,7 @@ router.post('/', restrictToAdmin, function(request, response) {
  *     summary: Update an account
  *     tags: [Account]
  *     security:
- *       - admin: []
+ *       - adminBearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -170,28 +172,27 @@ router.post('/', restrictToAdmin, function(request, response) {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               amount:
- *                 type: number
- *               limit:
- *                 type: number
- *               balance:
- *                 type: number
- *               id_user:
- *                 type: integer
+ *             $ref: '#/components/schemas/Account'
  *     responses:
  *       200:
  *         description: The updated account
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Account'
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Account not found
+ *       500:
+ *         description: Internal server error
  */
 router.put('/:id', restrictToAdmin, function(request, response) {
     account.update(request.params.id, request.body, function(err, result) {
         if (err) {
-            response.json(err);
+            response.status(500).json({ error: 'Internal server error' });
+        } else if (result.affectedRows === 0) {
+            response.status(404).json({ error: 'Account not found' });
         } else {
             response.json(result);
         }
@@ -205,7 +206,7 @@ router.put('/:id', restrictToAdmin, function(request, response) {
  *     summary: Delete an account
  *     tags: [Account]
  *     security:
- *       - admin: []
+ *       - adminBearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -219,12 +220,18 @@ router.put('/:id', restrictToAdmin, function(request, response) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Account'
+ *       404:
+ *         description: Account not found
+ *       500:
+ *         description: Internal server error
  */
 router.delete('/:id', restrictToAdmin, function(request, response) {
     account.delete(request.params.id, function(err, result) {
         if (err) {
-            response.json(err);
+            response.status(500).json({ error: 'Internal server error' });
+        } else if (result.affectedRows === 0) {
+            response.status(404).json({ error: 'Account not found' });
         } else {
             response.json(result);
         }

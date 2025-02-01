@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, restrictToUserAssets, checkCardAccess, restrictToAdmin } = require('../middleware/auth_middleware');
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
 const card = require('../models/card_model');
-const logger = require('../logger'); // Import logger
+const logger = require('../logger');
 
 router.use(verifyToken);
-router.use(restrictToUserAssets);
 
 /**
  * @swagger
@@ -21,7 +20,7 @@ router.use(restrictToUserAssets);
  *     summary: Get all cards
  *     tags: [Card]
  *     security:
- *       - user: []
+ *       - admin: []
  *     responses:
  *       200:
  *         description: A list of cards
@@ -32,7 +31,7 @@ router.use(restrictToUserAssets);
  *               items:
  *                 type: object
  */
-router.get('/', checkCardAccess, function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) {
     card.getAll(function(err, result) {
         if (err) {
             logger.error(`Error fetching cards: ${err}`);
@@ -46,50 +45,12 @@ router.get('/', checkCardAccess, function(request, response) {
 
 /**
  * @swagger
- * /card/type/{type}:
- *   get:
- *     summary: Get cards by type
- *     tags: [Card]
- *     security:
- *       - user: []
- *     parameters:
- *       - in: path
- *         name: type
- *         required: true
- *         schema:
- *           type: string
- *         description: The card type (debit, credit, double)
- *     responses:
- *       200:
- *         description: A list of cards
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- */
-router.get('/type/:type', checkCardAccess, function(request, response) {
-    const cardType = request.params.type;
-    card.getByType(cardType, function(err, result) {
-        if (err) {
-            logger.error(`Error fetching cards by type: ${err}`);
-            response.json(err);
-        } else {
-            logger.info(`Fetched cards by type: ${cardType}`);
-            response.json(result);
-        }
-    });
-});
-
-/**
- * @swagger
  * /card/{id}:
  *   get:
  *     summary: Get card by ID
  *     tags: [Card]
  *     security:
- *       - user: []
+ *       - admin: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -105,7 +66,7 @@ router.get('/type/:type', checkCardAccess, function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', checkCardAccess, function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) {
     card.getById(request.params.id, function(err, result) {
         if (err) {
             logger.error(`Error fetching card by ID: ${err}`);
@@ -132,8 +93,6 @@ router.get('/:id', checkCardAccess, function(request, response) {
  *           schema:
  *             type: object
  *             properties:
- *               type:
- *                 type: string
  *               card_number:
  *                 type: string
  *               pin:
@@ -182,8 +141,6 @@ router.post('/', restrictToAdmin, function(request, response) {
  *           schema:
  *             type: object
  *             properties:
- *               type:
- *                 type: string
  *               pin:
  *                 type: string
  *               retrys:

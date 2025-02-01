@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, restrictToUserAssets, checkCardAccess, restrictToAdmin } = require('../middleware/auth_middleware');
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
 const cardAccount = require('../models/card_account_model');
-const logger = require('../logger'); // Import logger
+const logger = require('../logger');
 
 router.use(verifyToken);
-router.use(restrictToUserAssets);
 
 /**
  * @swagger
@@ -21,7 +20,7 @@ router.use(restrictToUserAssets);
  *     summary: Get all card accounts
  *     tags: [CardAccount]
  *     security:
- *       - user: []
+ *       - admin: []
  *     responses:
  *       200:
  *         description: A list of card accounts
@@ -32,7 +31,7 @@ router.use(restrictToUserAssets);
  *               items:
  *                 type: object
  */
-router.get('/', checkCardAccess, function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) {
     cardAccount.getAll(function(err, result) {
         if (err) {
             logger.error(`Error fetching card accounts: ${err}`);
@@ -51,7 +50,7 @@ router.get('/', checkCardAccess, function(request, response) {
  *     summary: Get card account by ID
  *     tags: [CardAccount]
  *     security:
- *       - user: []
+ *       - admin: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -67,7 +66,7 @@ router.get('/', checkCardAccess, function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', checkCardAccess, function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) {
     cardAccount.getById(request.params.id, function(err, result) {
         if (err) {
             logger.error(`Error fetching card account by ID: ${err}`);
@@ -100,6 +99,7 @@ router.get('/:id', checkCardAccess, function(request, response) {
  *                 type: integer
  *               account_type:
  *                 type: string
+ *                 enum: [credit, debit]
  *     responses:
  *       200:
  *         description: The created card account
@@ -148,6 +148,7 @@ router.post('/', restrictToAdmin, function(request, response) {
  *                 type: integer
  *               account_type:
  *                 type: string
+ *                 enum: [credit, debit]
  *     responses:
  *       200:
  *         description: The updated card account

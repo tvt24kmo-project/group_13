@@ -11,7 +11,7 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:3000', // Replace with your server URL
+                url: 'http://localhost:3000',
             },
         ],
         components: {
@@ -21,26 +21,69 @@ const options = {
                     scheme: 'bearer',
                     bearerFormat: 'JWT',
                 },
-                card: {
+                adminBearerAuth: {
                     type: 'http',
                     scheme: 'bearer',
                     bearerFormat: 'JWT',
                 },
-                user: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
+            },
+            schemas: {
+                Account: {
+                    type: 'object',
+                    properties: {
+                        id_account: { type: 'integer', description: 'Primary key' },
+                        amount: { type: 'number' },
+                        limit: { type: 'number' },
+                        balance: { type: 'number' },
+                        id_user: { type: 'integer', description: 'Foreign key to User' },
+                    },
                 },
-                admin: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
+                User: {
+                    type: 'object',
+                    properties: {
+                        id_user: { type: 'integer', description: 'Primary key' },
+                        firstname: { type: 'string' },
+                        lastname: { type: 'string' },
+                        pic_path: { type: 'string' },
+                    },
+                },
+                Card: {
+                    type: 'object',
+                    properties: {
+                        id_card: { type: 'integer', description: 'Primary key' },
+                        card_number: { type: 'string' },
+                        pin: { type: 'string' },
+                        retrys: { type: 'integer' },
+                    },
+                },
+                Transaction: {
+                    type: 'object',
+                    properties: {
+                        id_transaction: { type: 'integer', description: 'Primary key' },
+                        transaction_type: { type: 'string' },
+                        sum: { type: 'number' },
+                        date: { type: 'string', format: 'date-time' },
+                        type: { type: 'string' },
+                        id_account: { type: 'integer', description: 'Foreign key to Account' },
+                    },
+                },
+                CardAccount: {
+                    type: 'object',
+                    properties: {
+                        id_card_account: { type: 'integer', description: 'Primary key' },
+                        id_card: { type: 'integer', description: 'Foreign key to Card' },
+                        id_account: { type: 'integer', description: 'Foreign key to Account' },
+                        account_type: { type: 'string' },
+                    },
                 },
             },
         },
         security: [
             {
                 bearerAuth: [],
+            },
+            {
+                adminBearerAuth: [],
             },
         ],
     },

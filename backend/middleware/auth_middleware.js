@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const card = require('../models/card_model');
 const account = require('../models/account_model');
 const user = require('../models/user_model');
+const Transaction = require('../models/transaction_model');
 
 dotenv.config();
 
@@ -23,6 +24,14 @@ function verifyToken(req, res, next) {
         req.user = decoded;
         next();
     });
+}
+
+function restrictToATM(req, res, next) {
+    const allowedRoutes = ['/atm/accounts', '/atm/select-account', '/atm/withdraw', '/atm/transactions', '/atm/balance'];
+    if (allowedRoutes.includes(req.path)) {
+        return next();
+    }
+    return res.sendStatus(403);
 }
 
 function restrictToUserAssets(req, res, next) {
@@ -138,12 +147,31 @@ function checkAccountAccess(req, res, next) {
     }
 }
 
-function restrictToAdmin(req, res, next) {
-    if (req.user.role !== 'admin') {
-        return res.status(403).send('Access denied');
-    }
-    next();
+function checkTransactionAccess(req, res, next) {
+    const userId = req.user.id;
+    const transactionId = req.params.id;
+
+    Transaction.getById(transactionId, (err, transaction) => {
+        if (err || !transaction) {
+            return res.sendStatus(403);
+        }
+
+        Account.getById(transaction.id_account, (err, account) => {
+            if (err || !account || account.id_user !== userId) {
+                return res.sendStatus(403);
+            }
+
+            next();
+        });
+    });
 }
 
-module.exports = { verifyToken, restrictToUserAssets, checkUserAccess, checkCardAccess, checkAccountAccess, restrictToAdmin };
+function restrictToAdmin(req, res, next) {
+    if (req.user && req.user.role === 'admin') {
+        return next();
+    }
+    return res.sendStatus(403);
+}
+
+module.exports = { verifyToken, restrictToATM, restrictToUserAssets, checkUserAccess, checkCardAccess, checkAccountAccess, checkTransactionAccess, restrictToAdmin };
 

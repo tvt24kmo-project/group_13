@@ -1,16 +1,17 @@
 const db = require('../database');
 const bcrypt = require('bcrypt');
 
-const admin = {
-    getByUsername: function(username, callback) {
-        console.log('Querying database for username:', username);
-        db.query('SELECT * FROM admins WHERE username = ?', [username], (err, results) => {
+const Admin = {
+    getByUsername: (username, callback) => {
+        const query = 'SELECT * FROM admins WHERE username = ?';
+        db.query(query, [username], (err, results) => {
             if (err) {
-                console.error('Database query error:', err);
-                return callback(err, null);
+                return callback(err);
             }
-            console.log('Database query results:', results);
-            callback(null, results);
+            if (results.length === 0) {
+                return callback(null, null);
+            }
+            return callback(null, results[0]);
         });
     },
     add: function(admin_data, callback) {
@@ -23,4 +24,4 @@ const admin = {
     }
 };
 
-module.exports = admin;
+module.exports = Admin;

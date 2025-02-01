@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, restrictToUserAssets, restrictToAdmin } = require('../middleware/auth_middleware');
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
 const transaction = require('../models/transaction_model');
-const logger = require('../logger'); // Import logger
+const logger = require('../logger');
 
 router.use(verifyToken);
-router.use(restrictToUserAssets);
 
 /**
  * @swagger
@@ -16,54 +15,12 @@ router.use(restrictToUserAssets);
 
 /**
  * @swagger
- * /transactions/account/{id_account}:
- *   get:
- *     summary: Get transactions for a specific account
- *     tags: [Transaction]
- *     security:
- *       - card: []
- *     parameters:
- *       - in: path
- *         name: id_account
- *         required: true
- *         schema:
- *           type: integer
- *         description: The account ID
- *     responses:
- *       200:
- *         description: A list of transactions
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- */
-router.get('/account/:id_account', function(request, response) {
-    const accountId = parseInt(request.params.id_account, 10);
-    if (!request.user.assets.accounts.includes(accountId)) {
-        logger.warn(`Access denied for account ID: ${accountId}`);
-        return response.status(403).send('Access denied');
-    }
-    transaction.getByAccount(accountId, function(err, result) {
-        if (err) {
-            logger.error(`Error fetching user transactions: ${err}`);
-            response.json(err);
-        } else {
-            logger.info(`Fetched transactions for account ID: ${accountId}`);
-            response.json(result);
-        }
-    });
-});
-
-/**
- * @swagger
- * /transactions:
+ * /transaction:
  *   get:
  *     summary: Get all transactions
  *     tags: [Transaction]
  *     security:
- *       - card: []
+ *       - admin: []
  *     responses:
  *       200:
  *         description: A list of transactions
@@ -74,12 +31,13 @@ router.get('/account/:id_account', function(request, response) {
  *               items:
  *                 type: object
  */
-router.get('/', function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) {
     transaction.getAll(function(err, result) {
         if (err) {
-            console.error('Error fetching transactions:', err);
+            logger.error(`Error fetching transactions: ${err}`);
             response.json(err);
         } else {
+            logger.info('Fetched all transactions');
             response.json(result);
         }
     });
@@ -87,12 +45,12 @@ router.get('/', function(request, response) {
 
 /**
  * @swagger
- * /transactions/{id}:
+ * /transaction/{id}:
  *   get:
  *     summary: Get transaction by ID
  *     tags: [Transaction]
  *     security:
- *       - card: []
+ *       - admin: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -108,19 +66,58 @@ router.get('/', function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) {
     transaction.getById(request.params.id, function(err, result) {
         if (err) {
+            logger.error(`Error fetching transaction by ID: ${err}`);
             response.json(err);
         } else {
-            response.json(result[0]);
+            logger.info(`Fetched transaction by ID: ${request.params.id}`);
+            response.json(result);
         }
     });
 });
 
 /**
  * @swagger
- * /transactions:
+ * /transaction/account/{id}:
+ *   get:
+ *     summary: Get transactions by account ID
+ *     tags: [Transaction]
+ *     security:
+ *       - admin: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The account ID
+ *     responses:
+ *       200:
+ *         description: A list of transactions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
+router.get('/account/:id', restrictToAdmin, function(request, response) {
+    transaction.getByAccount(request.params.id, function(err, result) {
+        if (err) {
+            logger.error(`Error fetching transactions by account ID: ${err}`);
+            response.json(err);
+        } else {
+            logger.info(`Fetched transactions by account ID: ${request.params.id}`);
+            response.json(result);
+        }
+    });
+});
+
+/**
+ * @swagger
+ * /transaction:
  *   post:
  *     summary: Add a new transaction
  *     tags: [Transaction]
@@ -133,15 +130,17 @@ router.get('/:id', function(request, response) {
  *           schema:
  *             type: object
  *             properties:
- *               id_account:
- *                 type: integer
- *               amount:
- *                 type: number
- *               type:
+ *               transaction_type:
  *                 type: string
+ *               sum:
+ *                 type: number
  *               date:
  *                 type: string
  *                 format: date-time
+ *               type:
+ *                 type: string
+ *               id_account:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: The created transaction
@@ -153,17 +152,18 @@ router.get('/:id', function(request, response) {
 router.post('/', restrictToAdmin, function(request, response) {
     transaction.add(request.body, function(err, result) {
         if (err) {
-            console.error('Error adding transaction:', err);
+            logger.error(`Error adding transaction: ${err}`);
             response.json(err);
         } else {
-            response.json(request.body);
+            logger.info('Added new transaction');
+            response.json(result);
         }
     });
 });
 
 /**
  * @swagger
- * /transactions/{id}:
+ * /transaction/{id}:
  *   put:
  *     summary: Update a transaction
  *     tags: [Transaction]
@@ -183,15 +183,17 @@ router.post('/', restrictToAdmin, function(request, response) {
  *           schema:
  *             type: object
  *             properties:
- *               id_account:
- *                 type: integer
- *               amount:
- *                 type: number
- *               type:
+ *               transaction_type:
  *                 type: string
+ *               sum:
+ *                 type: number
  *               date:
  *                 type: string
  *                 format: date-time
+ *               type:
+ *                 type: string
+ *               id_account:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: The updated transaction
@@ -203,17 +205,18 @@ router.post('/', restrictToAdmin, function(request, response) {
 router.put('/:id', restrictToAdmin, function(request, response) {
     transaction.update(request.params.id, request.body, function(err, result) {
         if (err) {
-            console.error('Error updating transaction:', err);
+            logger.error(`Error updating transaction: ${err}`);
             response.json(err);
         } else {
-            response.json(result.affectedRows);
+            logger.info(`Updated transaction with ID: ${request.params.id}`);
+            response.json(result);
         }
     });
 });
 
 /**
  * @swagger
- * /transactions/{id}:
+ * /transaction/{id}:
  *   delete:
  *     summary: Delete a transaction
  *     tags: [Transaction]
@@ -237,9 +240,11 @@ router.put('/:id', restrictToAdmin, function(request, response) {
 router.delete('/:id', restrictToAdmin, function(request, response) {
     transaction.delete(request.params.id, function(err, result) {
         if (err) {
+            logger.error(`Error deleting transaction: ${err}`);
             response.json(err);
         } else {
-            response.json(result.affectedRows);
+            logger.info(`Deleted transaction with ID: ${request.params.id}`);
+            response.json(result);
         }
     });
 });

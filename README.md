@@ -20,6 +20,8 @@
 - winston
 - winston-daily-rotate-file
 - nodemon (devDependencies)
+- cors
+- helmet
 
 ## HOX HOX!!
 Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja syöttäkää siihen oman ympäristönne tiedot. Backend kansiossa on .env tiedoston malli. Lisätkää sinne muuttujia jos niitä joudutte omaan ympäristöön luomaan. Siitä on sitte kätevä muiden päivittää omaa .env tiedostoa. **MUISTAJAA POISTAA KAIKKI OMAN YMPÄRISTÖN TIEDOT!!!**
@@ -89,6 +91,42 @@ Käytössä dotenv moduuli. Luokaa siis backend kansioon oma .env tiedosto ja sy
 | Tyyppi | Komento      | Esimerkki       | Body Kentät       | Selite                                                   |
 | ------ | -------------| ----------------| ------------------| ---------------------------------------------------------|
 | post   | admin login  | /admin_login    | username, password | Kirjaudutaan sisään admin-käyttäjänä käyttäen usernamea ja passwordia.|
+
+## create_default_admin.js script
+
+`create_default_admin.js` skripti on tarkoitettu luomaan oletus admin-käyttäjä tietokantaan. Tämä skripti tarkistaa, onko admin-käyttäjä (ID 1) jo olemassa, ja jos ei ole, se luo uuden admin-käyttäjän käyttäen ympäristömuuttujissa määriteltyjä tunnuksia.
+
+### Käyttö
+
+1. Varmista, että `.env` tiedostossa on määritelty `ADMIN_USERNAME` ja `ADMIN_PASSWORD`.
+2. Aja skripti komennolla:
+   ```bash
+   node create_default_admin.js
+   ```
+3. Skripti luo admin-käyttäjän tietokantaan, jos sitä ei vielä ole olemassa.
+
+### Miksi tämä skripti on olemassa?
+
+Tämä skripti helpottaa kehitysympäristön pystyttämistä ja varmistaa, että järjestelmässä on aina olemassa admin-käyttäjä, jolla voidaan hallinnoida sovellusta. Tämä on erityisen hyödyllistä uusille kehittäjille ja testausympäristöissä.
+
+## create_token.js script
+
+`create_token.js` skripti on tarkoitettu luomaan satunnainen token, jota voidaan käyttää sovelluksen eri osissa, kuten autentikoinnissa tai salauksessa. Skripti generoi 64 tavun pituisen satunnaisen tokenin ja tulostaa sen konsoliin.
+
+### Käyttö
+
+1. Aja skripti komennolla:
+   ```bash
+   node create_token.js
+   ```
+2. Kopioi tulostettu token ja sijoita se `.env` tiedostoon muuttujaan `MY_TOKEN`:
+   ```
+   MY_TOKEN=kopioitu_token
+   ```
+
+### Miksi tämä skripti on olemassa?
+
+Tämä skripti helpottaa turvallisten ja satunnaisten tokenien luomista, joita voidaan käyttää sovelluksen eri osissa. Tokenit ovat tärkeitä esimerkiksi autentikoinnissa ja tietoturvassa.
 
 ## Swaggerin käyttö
 

@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const Admin = require('../models/admin_model');
 const dotenv = require('dotenv');
-const admin = require('../models/admin_model');
-const logger = require('../logger'); // Import logger
+const { logger } = require('../logger');
+
 dotenv.config();
 
 /**
  * @swagger
  * tags:
  *   name: Admin
- *   description: Admin management
+ *   description: Admin operations
  */
 
 /**
@@ -20,8 +21,6 @@ dotenv.config();
  *   post:
  *     summary: Admin login
  *     tags: [Admin]
- *     security:
- *       - admin: []
  *     requestBody:
  *       required: true
  *       content:
@@ -44,39 +43,39 @@ dotenv.config();
  *                 token:
  *                   type: string
  */
-router.post('/', function(request, response) {
-    const { username, password } = request.body;
+router.post('/', (req, res) => {
+    const { username, password } = req.body;
 
-    admin.getByUsername(username, function(err, dbResult) {
+    Admin.getByUsername(username, (err, admin) => {
         if (err) {
-            logger.error(`Database error: ${err}`);
-            return response.status(500).json(err);
+            logger.error(`Internal server error: ${err}`);
+            return res.status(500).json({ message: 'Internal server error' });
         }
-        if (dbResult.length === 0) {
-            logger.warn(`Invalid credentials: username not found for ${username}`);
-            return response.status(403).json({ error: 'Invalid credentials' });
+        if (!admin) {
+            logger.warn(`Invalid username or password for username ${username}`);
+            return res.status(401).json({ message: 'Invalid username or password' });
         }
 
-        bcrypt.compare(password, dbResult[0].password, function(err, compareResult) {
+        if (!admin.password) {
+            logger.warn(`Password not found for username ${username}`);
+            return res.status(401).json({ message: 'Invalid username or password' });
+        }
+
+        bcrypt.compare(password, admin.password, (err, isMatch) => {
             if (err) {
-                logger.error(`Bcrypt error: ${err}`);
-                return response.status(500).json(err);
+                logger.error(`Internal server error: ${err}`);
+                return res.status(500).json({ message: 'Internal server error' });
             }
-            if (compareResult) {
-                const token = generateAccessToken({ username: username, role: 'admin' }, '3600s');
-                logger.info(`Admin logged in with username ${username}`);
-                response.json({ token: token });
-            } else {
-                logger.warn(`Invalid credentials: password mismatch for ${username}`);
-                response.status(403).json({ error: 'Invalid credentials' });
+            if (!isMatch) {
+                logger.warn(`Invalid username or password for username ${username}`);
+                return res.status(401).json({ message: 'Invalid username or password' });
             }
+
+            const token = jwt.sign({ id: admin.id_admin, role: 'admin' }, process.env.MY_TOKEN, { expiresIn: '15m' });
+            logger.info(`Admin logged in with username ${username}`);
+            res.status(200).json({ token });
         });
     });
 });
-
-function generateAccessToken(admin, expiresIn) {
-    const token = jwt.sign(admin, process.env.MY_TOKEN, { expiresIn: expiresIn });
-    return token;
-}
 
 module.exports = router;

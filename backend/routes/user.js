@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, restrictToUserAssets, checkUserAccess, restrictToAdmin } = require('../middleware/auth_middleware');
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
 const user = require('../models/user_model');
-const logger = require('../logger'); // Import logger
+const logger = require('../logger');
 
 router.use(verifyToken);
-router.use(restrictToUserAssets);
 
 /**
  * @swagger
@@ -32,7 +31,7 @@ router.use(restrictToUserAssets);
  *               items:
  *                 type: object
  */
-router.get('/', checkUserAccess, function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) {
     user.getAll(function(err, result) {
         if (err) {
             logger.error(`Error fetching users: ${err}`);
@@ -67,11 +66,13 @@ router.get('/', checkUserAccess, function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', checkUserAccess, function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) {
     user.getById(request.params.id, function(err, result) {
         if (err) {
+            logger.error(`Error fetching user by ID: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Fetched user by ID: ${request.params.id}`);
             response.json(result);
         }
     });
@@ -92,9 +93,11 @@ router.get('/:id', checkUserAccess, function(request, response) {
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               firstname:
  *                 type: string
- *               password:
+ *               lastname:
+ *                 type: string
+ *               pic_path:
  *                 type: string
  *     responses:
  *       200:
@@ -107,8 +110,10 @@ router.get('/:id', checkUserAccess, function(request, response) {
 router.post('/', restrictToAdmin, function(request, response) {
     user.add(request.body, function(err, result) {
         if (err) {
+            logger.error(`Error adding user: ${err}`);
             response.json(err);
         } else {
+            logger.info('Added new user');
             response.json(result);
         }
     });
@@ -136,9 +141,11 @@ router.post('/', restrictToAdmin, function(request, response) {
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               firstname:
  *                 type: string
- *               password:
+ *               lastname:
+ *                 type: string
+ *               pic_path:
  *                 type: string
  *     responses:
  *       200:
@@ -151,8 +158,10 @@ router.post('/', restrictToAdmin, function(request, response) {
 router.put('/:id', restrictToAdmin, function(request, response) {
     user.update(request.params.id, request.body, function(err, result) {
         if (err) {
+            logger.error(`Error updating user: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Updated user with ID: ${request.params.id}`);
             response.json(result);
         }
     });
@@ -184,8 +193,10 @@ router.put('/:id', restrictToAdmin, function(request, response) {
 router.delete('/:id', restrictToAdmin, function(request, response) {
     user.delete(request.params.id, function(err, result) {
         if (err) {
+            logger.error(`Error deleting user: ${err}`);
             response.json(err);
         } else {
+            logger.info(`Deleted user with ID: ${request.params.id}`);
             response.json(result);
         }
     });
