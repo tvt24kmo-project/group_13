@@ -14,8 +14,11 @@ router.post('/',
                                                                                 //^eli jos molemmat annettu edetään.
             card.checkPin(card_number, function(dbError, dbResult) { //haetaan kortin PIN tietokannasta card_modelin kautta.
                 if(dbError){ 
-                    response.json(dbError);
+                    response.send("-11"); // jos tämä tulee, tiedetään että on tietokantavirhe.(luento2 kohdasta 46:37.)
+                return
                 }
+             
+
                 else{
                     if (dbResult.length > 0) {  
                         bcrypt.compare(pin,dbResult[0].pin, function
@@ -56,3 +59,4 @@ return jwt.sign(card, process.env.MY_TOKEN, {expiresIn: '1800s'}); //kun loginin
 }
 
 module.exports=router;
+
