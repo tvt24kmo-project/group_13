@@ -26,6 +26,7 @@ void Login::on_btnLogin_clicked()
     loginManager = new QNetworkAccessManager(this);
     connect(loginManager,SIGNAL(finished(QNetworkReply*)),this,SLOT(loginSlot(QNetworkReply*)));
     reply = loginManager->post(request, QJsonDocument(jsonObj).toJson());
+
 }
 
 void Login::loginSlot(QNetworkReply *reply)
@@ -42,7 +43,9 @@ void Login::loginSlot(QNetworkReply *reply)
           else {
               if(response_data!="false" && response_data.length()>20) {
                   ui->labelInfo->setText("Kirjautuminen OK");
-
+                  hide();
+                  check_out_type=new  Check_card_type(this);
+                  check_out_type->open();
               }
               else {
                   ui->labelInfo->setText("Väärä tunnus/salasana");

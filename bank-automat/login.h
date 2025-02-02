@@ -5,6 +5,8 @@
 #include <QtNetwork>
 #include <QNetworkAccessManager>
 #include <QJsonDocument>
+#include"check_card_type.h"
+
 
 namespace Ui {
 class Login;
@@ -27,6 +29,9 @@ private:
     QNetworkAccessManager *loginManager;
     QNetworkReply *reply;
     QByteArray response_data;
+    Check_card_type *check_out_type;
+
+
 };
 
 #endif // LOGIN_H
