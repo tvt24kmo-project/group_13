@@ -16,6 +16,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_btnstart_clicked()
 {
+    hide();
     Login *objLogin=new Login(this);
     objLogin->open();
 }

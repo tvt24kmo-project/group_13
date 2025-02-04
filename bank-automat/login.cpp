@@ -1,5 +1,6 @@
 #include "environment.h"
 #include "login.h"
+#include "mainwindow.h"
 #include "ui_login.h"
 
 Login::Login(QWidget *parent)
@@ -7,6 +8,11 @@ Login::Login(QWidget *parent)
     , ui(new Ui::Login)
 {
     ui->setupUi(this);
+    QTimer *timer =new QTimer(this);
+    connect(timer,SIGNAL(timeout()),this,SLOT(showTime()));
+    timer->start(1000);
+
+    showTime();
 }
 
 Login::~Login()
@@ -43,6 +49,8 @@ void Login::loginSlot(QNetworkReply *reply)
               if(response_data!="false" && response_data.length()>20) {
                   ui->labelInfo->setText("Kirjautuminen OK");
 
+                  static int i=1;
+                  ui->stackedWidget->setCurrentIndex(i);
               }
               else {
                   ui->labelInfo->setText("Väärä tunnus/salasana");
@@ -53,3 +61,88 @@ void Login::loginSlot(QNetworkReply *reply)
     reply->deleteLater();
     loginManager->deleteLater();
 }
+void Login::showTime()
+{
+    QTime time =QTime ::currentTime();
+    QString text = time.toString("hh:mm");
+    if((time.second()%2)==0)
+        text[2]=' ';
+    ui-> lcd->display(text);
+
+}
+void Login::on_btn_credit_clicked()
+{
+    static int i=2;
+    ui->stackedWidget->setCurrentIndex(i);
+}
+
+
+void Login::on_btn_debit_clicked()
+{
+    static int i=2;
+    ui->stackedWidget->setCurrentIndex(i);
+}
+
+
+void Login::on_btn_balance_clicked()
+{
+    static int i=5;
+    ui->stackedWidget->setCurrentIndex(i);
+}
+
+
+void Login::on_btn_transactions_clicked()
+{
+    static int i=3;
+    ui->stackedWidget->setCurrentIndex(i);
+}
+
+
+
+
+
+void Login::on_btn_back_clicked()
+{
+    static int i=2;
+    ui->stackedWidget->setCurrentIndex(i);
+
+}
+
+
+void Login::on_btn_withdrawal_clicked()
+{
+    static int i=4;
+    ui->stackedWidget->setCurrentIndex(i);
+}
+
+
+void Login::on_btn_cancel_clicked()
+{
+    static int i=0;
+    ui->stackedWidget->setCurrentIndex(i);
+}
+
+
+void Login::on_btn_20_clicked()
+{
+    ui->lineEdit_sum->setText("20");
+}
+
+
+void Login::on_btn_40_clicked()
+{
+ui->lineEdit_sum->setText("40");
+}
+
+
+void Login::on_btn_50_clicked()
+{
+ui->lineEdit_sum->setText("50");
+}
+
+
+void Login::on_btn_100_clicked()
+{
+ui->lineEdit_sum->setText("100");
+}
+
