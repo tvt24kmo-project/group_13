@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "login.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -12,3 +13,11 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::on_btnstart_clicked()
+{
+    hide();
+    Login *objLogin=new Login(this);
+    objLogin->open();
+}
+
