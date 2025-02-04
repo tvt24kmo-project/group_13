@@ -1,12 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const logger = require('../logger');
+const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollistaa web-palvelimen luomisen
+const router = express.Router(); // Luodaan uusi reititin Expressille, joka auttaa määrittämään HTTP-reittejä
+const logger = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
 
 /**
  * @swagger
  * tags:
  *   name: Index
- *   description: Index route
+ *   description: Index operations
  */
 
 /**
@@ -21,13 +21,17 @@ const logger = require('../logger');
  *       200:
  *         description: Welcome message
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-router.get('/', function(req, res, next) {
-    logger.info('Accessed index route');
-    res.send('Welcome to the Bank Automat API');
+router.get('/', function(req, res, next) { // Reitti, joka käsittelee GET-pyynnön pääsivulle
+    logger.info('Accessed index route'); // Kirjataan pääsivun reitin käyttö lokiin
+    res.status(200).json({ message: 'Welcome to the Bank Automat API' }); // Palautetaan tervehdysviesti asiakkaalle
 });
 
-module.exports = router;
+module.exports = router; // Viedään reititin ulos käyttöön
+

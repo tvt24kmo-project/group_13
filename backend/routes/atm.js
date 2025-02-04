@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const Account = require('../models/account_model');
-const Transaction = require('../models/transaction_model');
-const CardAccount = require('../models/card_account_model');
-const User = require('../models/user_model');
+const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollistaa web-palvelimen luomisen
+const router = express.Router(); // Luodaan uusi reititin Expressille, joka auttaa määrittämään HTTP-reittejä
+const jwt = require('jsonwebtoken'); // Tuodaan jsonwebtoken-kirjasto JWT-tunnisteiden luomiseen ja tarkistamiseen
+const Account = require('../models/account_model'); // Tuodaan Account-malli, joka määrittelee tilitietokannan rakenteen
+const Transaction = require('../models/transaction_model'); // Tuodaan Transaction-malli, joka määrittelee tapahtumatietokannan rakenteen
+const CardAccount = require('../models/card_account_model'); // Tuodaan CardAccount-malli, joka määrittelee korttitilitietokannan rakenteen
+const User = require('../models/user_model'); // Tuodaan User-malli, joka määrittelee käyttäjätietokannan rakenteen
 
 /**
  * @swagger
@@ -13,17 +13,25 @@ const User = require('../models/user_model');
  *   description: ATM operations
  */
 
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    jwt.verify(token, process.env.MY_TOKEN, (err, user) => {
-        if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
+function authenticateToken(req, res, next) { // Funktio, joka tarkistaa ja autentikoi JWT-tunnisteen
+    const authHeader = req.headers['authorization']; // Haetaan authorization-otsikosta mahdollinen tunniste
+    const token = authHeader && authHeader.split(' ')[1]; // Otetaan tunniste talteen, jos löytyy
+    if (!token) return res.sendStatus(403); // Jos tunnistetta ei ole, palautetaan statuskoodi 403
+
+    jwt.verify(token, process.env.MY_TOKEN, (err, user) => { // Tarkistetaan tunniste ja puretaan se käyttäjäksi 
+        if (err) return res.sendStatus(403); // Jos tunnistetta ei löydy tai se on vanhentunut, palautetaan statuskoodi 403
+        req.user = user; // Jos tunniste löytyy, asetetaan käyttäjä pyynnön user-ominaisuudeksi
+
+        // Tarkistetaan, onko käyttäjä kirjattu ulos
+        if (req.session && req.session.loggedOutTokens && req.session.loggedOutTokens.includes(token)) {
+            return res.sendStatus(403); // Jos token on kirjattu ulos, palautetaan statuskoodi 403
+        }
+
+        next(); // Siirrytään seuraavaan middlewareen tai reittiin 
     });
 }
 
-router.use(authenticateToken);
+router.use(authenticateToken); // Käytetään authenticateToken-funktiota kaikille reiteille, jotka määritellään tämän reitittimen kanssa
 
 /**
  * @swagger
@@ -48,16 +56,16 @@ router.use(authenticateToken);
  *       500:
  *         description: Internal server error
  */
-router.get('/accounts', (req, res) => {
-    const cardId = req.user.id;
+router.get('/accounts', (req, res) => { // Reitti, joka hakee kaikki tilit, jotka on linkitetty korttiin
+    const cardId = req.user.id; // Haetaan käyttäjän ID, joka saatiin JWT-tunnisteesta ja lisättiin pyyntöön 'user' -kenttään authenticateToken-funktiossa
 
-    CardAccount.getByCardId(cardId, (err, accounts) => {
-        if (err) {
-            console.error('Error fetching accounts:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+    CardAccount.getByCardId(cardId, (err, accounts) => { // Haetaan tilit, jotka on linkitty korttiin 
+        if (err) { // Jos tulee virhe, palautetaan virheilmoitus 
+            console.error('Error fetching accounts:', err); // Kirjataan virheilmoitus konsoliin 
+            return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus 
         }
-        const accountTypes = accounts.map(account => ({ account_type: account.account_type }));
-        res.status(200).json(accountTypes);
+        const accountTypes = accounts.map(account => ({ account_type: account.account_type })); // Muutetaan tilitiedot haluttuun muotoon, eli otetaan vain tilin tyyppi ('account_type') talteen ja muodostetaan uusi taulukko
+        res.status(200).json(accountTypes); // Palautetaan statuskoodi 200 ja tilitiedot JSON-muodossa 
     });
 });
 
@@ -85,24 +93,22 @@ router.get('/accounts', (req, res) => {
  *       400:
  *         description: Bad request
  */
-router.post('/select-account', (req, res) => {
-    const { account_type } = req.body;
-    const cardId = req.user.id;
+router.post('/select-account', (req, res) => { // Reitti, joka valitsee käyttäjälle tilin
+    const { account_type } = req.body; // Haetaan pyynnön body-osiosta tilin tyyppi ('account_type')
+    const cardId = req.user.id; // Haetaan käyttäjän ID, joka saatiin autentikoinnista (JWT-tunnisteessa)
 
-    CardAccount.getByCardId(cardId, (err, accounts) => {
-        if (err) {
-            console.error('Error fetching accounts:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+    CardAccount.getByCardId(cardId, (err, accounts) => { // Haetaan tilit, jotka on linkitetty korttiin
+        if (err) { // Jos tulee virhe, palautetaan virheilmoitus 
+            return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus 
         }
 
-        const selectedAccount = accounts.find(account => account.account_type === account_type);
-        if (!selectedAccount) {
-            return res.status(400).json({ message: 'Account type not found' });
+        const selectedAccount = accounts.find(account => account.account_type === account_type); // Etsitään tilitaulukosta haluttu tili, joka vastaa pyynnön body-osiosta saatuun tyyppiin
+        if (!selectedAccount) { // Jos tiliä ei löydy, palautetaan virheilmoitus 
+            return res.status(400).json({ message: 'Account type not found' }); // Palautetaan statuskoodi 400 ja virheilmoitus 
         }
 
-        req.session.selectedAccountId = selectedAccount.id_account;
-        console.log('Selected account ID:', selectedAccount.id_account);
-        res.status(200).json({ message: 'Account selected successfully' });
+        req.session.selectedAccountId = selectedAccount.id_account; // Tallennetaan valitun tilin ID sessioon, jotta se voidaan käyttää myöhemmin muiden pyyntöjen yhteydessä
+        res.status(200).json({ message: 'Account selected successfully' }); // Palautetaan statuskoodi 200 ja onnistumisilmoitus 
     });
 });
 
@@ -132,54 +138,43 @@ router.post('/select-account', (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.post('/withdraw', (req, res) => {
-    const { amount } = req.body;
-    const accountId = req.session.selectedAccountId;
+router.post('/withdraw', (req, res) => { // Reitti, joka käsittelee nostopyynnön
+    const { amount } = req.body; // Haetaan pyynnön body-osiosta nostettava summa ('amount')
+    const accountId = req.session.selectedAccountId; // Haetaan valitun tilin ID sessiosta 
 
-    console.log('Withdraw request:', req.body); 
-    if (!accountId) {
-        console.log('No account selected');
-        return res.status(400).json({ message: 'No account selected' });
+    if (!accountId) { // Jos tiliä ei ole valittu, palautetaan virheilmoitus 
+        return res.status(400).json({ message: 'No account selected' }); // Palautetaan statuskoodi 400 ja virheilmoitus 
     }
 
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        console.log('Invalid amount:', amount);
-        return res.status(400).json({ message: 'Invalid amount' });
+    const parsedAmount = parseFloat(amount); // Muutetaan nostettava summa numeroiksi ja otetaan se talteen 
+    if (isNaN(parsedAmount) || parsedAmount <= 0) { // Jos summa ei ole numero tai se on pienempi tai yhtä suuri kuin nolla, palautetaan virheilmoitus 
+        return res.status(400).json({ message: 'Invalid amount' }); // Palautetaan statuskoodi 400 ja virheilmoitus 
     }
 
-    console.log('Checking balance for account:', accountId, 'with amount:', parsedAmount);
-    Account.checkBalance(accountId, parsedAmount, (err, hasSufficientFunds) => {
-        if (err) {
-            console.log('Error checking balance:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+    Account.checkBalance(accountId, parsedAmount, (err, hasSufficientFunds) => { // Tarkistetaan, onko tilillä tarpeeksi varoja 
+        if (err) { // Jos tulee virhe, palautetaan virheilmoitus 
+            return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus 
         }
-        if (!hasSufficientFunds) {
-            console.log('Insufficient funds');
-            return res.status(400).json({ message: 'Insufficient funds' });
+        if (!hasSufficientFunds) { // Jos varoja ei ole tarpeeksi, palautetaan virheilmoitus 
+            return res.status(400).json({ message: 'Insufficient funds' }); // Palautetaan statuskoodi 400 ja virheilmoitus 
         }
 
-        console.log('Withdrawing amount:', parsedAmount, 'from account:', accountId);
-        Account.withdrawAmount(accountId, parsedAmount, (err) => {
-            if (err) {
-                console.log('Error withdrawing amount:', err);
-                return res.status(500).json({ message: 'Internal server error' });
+        Account.withdrawAmount(accountId, parsedAmount, (err) => { // Nostetaan summa tililtä 
+            if (err) { // Jos tulee virhe, palautetaan virheilmoitus 
+                return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus 
             }
 
-            console.log('Creating transaction for account:', accountId, 'with amount:', parsedAmount);
-            Transaction.create({
-                transaction_type: 'withdrawal',
-                sum: parsedAmount,
-                type: 'ATM',
-                id_account: accountId
-            }, (err) => {
-                if (err) {
-                    console.log('Error creating transaction:', err);
-                    return res.status(500).json({ message: 'Internal server error' });
+            Transaction.create({ // Luodaan tapahtuma, jossa näkyy tilin ID, nostettava summa ja muut tiedot 
+                transaction_type: 'withdrawal', // Määritellään tapahtuman tyyppi 
+                sum: parsedAmount, // Määritellään nostettava summa 
+                type: 'ATM', // Määritellään tapahtuman tyyppi 
+                id_account: accountId // Määritellään tilin ID
+            }, (err) => { // Jos tulee virhe, palautetaan virheilmoitus 
+                if (err) { // Jos tulee virhe, palautetaan virheilmoitus
+                    return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus 
                 }
 
-                console.log('Withdrawal successful');
-                res.status(200).json({ message: 'Withdrawal successful' });
+                res.status(200).json({ message: 'Withdrawal successful' }); // Palautetaan statuskoodi 200 ja onnistumisilmoitus 
             });
         });
     });
@@ -217,27 +212,22 @@ router.post('/withdraw', (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.post('/transactions', (req, res) => {
-    const accountId = req.session.selectedAccountId;
-    const page = parseInt(req.body.page) || 1;
-    const limit = 10;
-    const offset = (page - 1) * limit;
+router.post('/transactions', (req, res) => { // Reitti, joka hakee sivutetut tapahtumat valitulle tilille
+    const accountId = req.session.selectedAccountId; // Haetaan valitun tilin ID sessiosta
+    const page = parseInt(req.body.page) || 1; // Haetaan pyynnön body-osiosta sivunumero ('page')
+    const limit = 10; // Määritellään sivun koko
+    const offset = (page - 1) * limit; // Lasketaan ohitettava määrä rivejä
 
-    console.log('Fetching transactions for account ID:', accountId, 'Page:', page);
-
-    if (!accountId) {
-        console.log('No account selected');
-        return res.status(400).json({ message: 'No account selected' });
+    if (!accountId) { // Jos tiliä ei ole valittu, palautetaan virheilmoitus
+        return res.status(400).json({ message: 'No account selected' }); // Palautetaan statuskoodi 400 ja virheilmoitus
     }
 
-    Transaction.getByAccountId(accountId, limit, offset, (err, transactions) => {
-        if (err) {
-            console.error('Error fetching transactions:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+    Transaction.getByAccountId(accountId, limit, offset, (err, transactions) => { // Haetaan tapahtumat tilin ID:n perusteella
+        if (err) { // Jos tulee virhe, palautetaan virheilmoitus
+            return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus
         }
-        console.log('Transactions fetched successfully:', transactions);
-        const filteredTransactions = transactions.map(({ id_transaction, id_account, ...rest }) => rest);
-        res.status(200).json(filteredTransactions);
+        const filteredTransactions = transactions.map(({ id_transaction, id_account, ...rest }) => rest); // Suodatetaan pois id_transaction ja id_account kentät
+        res.status(200).json(filteredTransactions); // Palautetaan statuskoodi 200 ja tapahtumat JSON-muodossa
     });
 });
 
@@ -259,50 +249,39 @@ router.post('/transactions', (req, res) => {
  *               properties:
  *                 balance:
  *                   type: number
+ *                 available_credit:
+ *                   type: number
  *       400:
  *         description: No account selected
  *       500:
  *         description: Internal server error
  */
-router.get('/balance', (req, res) => {
-    const accountId = req.session.selectedAccountId;
+router.get('/balance', (req, res) => { // Reitti, joka hakee valitun tilin saldon
+    const accountId = req.session.selectedAccountId; // Haetaan valitun tilin ID sessiosta
 
-    console.log('Fetching balance for account ID:', accountId);
-
-    if (!accountId) {
-        console.log('No account selected');
-        return res.status(400).json({ message: 'No account selected' });
+    if (!accountId) { // Jos tiliä ei ole valittu, palautetaan virheilmoitus
+        return res.status(400).json({ message: 'No account selected' }); // Palautetaan statuskoodi 400 ja virheilmoitus
     }
 
-    Account.getBalance(accountId, (err, balance) => {
-        if (err) {
-            console.error('Error fetching balance:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+    Account.getById(accountId, (err, account) => { // Haetaan tilin tiedot
+        if (err) { // Jos tulee virhe, palautetaan virheilmoitus
+            return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus
         }
 
-        console.log('Balance fetched successfully:', balance);
-
-        // Fetch the account type from the card_account table
-        CardAccount.getByAccountId(accountId, (err, cardAccount) => {
-            if (err) {
-                console.error('Error fetching card account:', err);
-                return res.status(500).json({ message: 'Internal server error' });
+        CardAccount.getAccountType(accountId, (err, accountType) => { // Haetaan tilin tyyppi card_account taulusta
+            if (err) { // Jos tulee virhe, palautetaan virheilmoitus
+                return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus
             }
 
-            const accountType = cardAccount.account_type; // Ensure this is the correct column name
-
-            if (accountType === 'credit') {
-                Account.getAvailableCredit(accountId, (err, availableCredit) => {
-                    if (err) {
-                        console.error('Error fetching available credit:', err);
-                        return res.status(500).json({ message: 'Internal server error' });
+            if (accountType === 'credit') { // Jos tili on luottotili
+                Account.getAvailableCredit(accountId, (err, availableCredit) => { // Haetaan käytettävissä oleva luotto
+                    if (err) { // Jos tulee virhe, palautetaan virheilmoitus
+                        return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus
                     }
-
-                    console.log('Available credit fetched successfully:', availableCredit);
-                    res.status(200).json({ balance, availableCredit });
+                    res.status(200).json({ balance: account.balance, available_credit: availableCredit }); // Palautetaan saldo ja käytettävissä oleva luotto
                 });
-            } else {
-                res.status(200).json({ balance });
+            } else { // Jos tili on debit-tili
+                res.status(200).json({ balance: account.balance }); // Palautetaan vain saldo
             }
         });
     });
@@ -310,67 +289,38 @@ router.get('/balance', (req, res) => {
 
 /**
  * @swagger
- * /atm/user-info:
- *   get:
- *     summary: Get user information associated with the card
+ * /atm/logout:
+ *   post:
+ *     summary: Logout the user
  *     tags: [ATM]
  *     security:
  *       - user: []
  *     responses:
  *       200:
- *         description: User information
+ *         description: Logout successful
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 firstname:
- *                   type: string
- *                 lastname:
- *                   type: string
- *                 pic_path:
+ *                 message:
  *                   type: string
  *       500:
  *         description: Internal server error
  */
-router.get('/user-info', (req, res) => {
-    const cardId = req.user.id;
-
-    CardAccount.getByCardId(cardId, (err, accounts) => {
-        if (err) {
-            console.error('Error fetching accounts:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+router.post('/logout', (req, res) => { // Reitti, joka kirjaa käyttäjän ulos
+    const token = req.headers['authorization'].split(' ')[1]; // Haetaan token authorization-otsikosta
+    jwt.verify(token, process.env.MY_TOKEN, (err, user) => { // Tarkistetaan token ja puretaan se käyttäjäksi
+        if (err) { // Jos token on virheellinen
+            return res.status(403).json({ message: 'Forbidden' }); // Palautetaan statuskoodi 403 ja virheilmoitus
         }
-
-        if (accounts.length === 0) {
-            return res.status(404).json({ message: 'No accounts linked to this card' });
-        }
-
-        const accountId = accounts[0].id_account;
-        console.log('Fetched account ID:', accountId); // Add logging
-
-        Account.getById(accountId, (err, account) => {
-            if (err) {
-                console.error('Error fetching account:', err);
-                return res.status(500).json({ message: 'Internal server error' });
+        req.session.destroy(err => { // Tuhoaa käyttäjän session
+            if (err) { // Jos tulee virhe, palautetaan virheilmoitus
+                return res.status(500).json({ message: 'Internal server error' }); // Palautetaan statuskoodi 500 ja virheilmoitus
             }
-
-            console.log('Fetched account:', account); // Add logging to verify the account object
-
-            const userId = account[0].id_user; // Access the first element of the account array
-            console.log('Fetched user ID:', userId); // Add logging
-
-            User.getById(userId, (err, user) => {
-                if (err) {
-                    console.error('Error fetching user:', err);
-                    return res.status(500).json({ message: 'Internal server error' });
-                }
-
-                const { firstname, lastname, pic_path } = user;
-                res.status(200).json({ firstname, lastname, pic_path });
-            });
+            res.status(200).json({ message: 'Logout successful' }); // Palautetaan statuskoodi 200 ja onnistumisilmoitus
         });
     });
 });
 
-module.exports = router;
+module.exports = router; // Viedään reititin ulos käyttöön

@@ -8,10 +8,7 @@
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "bcryptjs": "^2.4.3",
-    "co": "^4.6.0",
     "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
@@ -21,7 +18,10 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "crypto": "^1.0.1",
+    "co": "^4.6.0",
+    "debug": "~2.6.9"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
-const transaction = require('../models/transaction_model');
-const logger = require('../logger');
+const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollistaa web-palvelimen luomisen
+const router = express.Router(); // Luodaan uusi reititin Expressille
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware'); // Tuodaan autentikointimiddlewaret, jotka tarkistavat käyttäjän tokenin ja rajoittavat pääsyn adminille
+const transaction = require('../models/transaction_model'); // Tuodaan transaction-modeli, joka sisältää tietokantahaku- ja käsittelytoimintoja
+const logger = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
 
-router.use(verifyToken);
+router.use(verifyToken); // Lisätään verifyToken middleware, joka tarkistaa käyttäjän tunnistautumisen ennen pääsyä reitteihin
 
 /**
  * @swagger
@@ -31,14 +31,14 @@ router.use(verifyToken);
  *               items:
  *                 type: object
  */
-router.get('/', restrictToAdmin, function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) { // Reitti, joka hakee kaikki tapahtumat (adminin oikeuksilla)
     transaction.getAll(function(err, result) {
         if (err) {
-            logger.error(`Error fetching transactions: ${err}`);
-            response.json(err);
+            logger.error(`Error fetching transactions: ${err}`); // Kirjataan virhe, jos tapahtumien hakeminen epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info('Fetched all transactions');
-            response.json(result);
+            logger.info('Fetched all transactions'); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan tapahtumat
         }
     });
 });
@@ -66,14 +66,14 @@ router.get('/', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', restrictToAdmin, function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) { // Reitti, joka hakee tapahtuman ID:n perusteella (adminin oikeuksilla)
     transaction.getById(request.params.id, function(err, result) {
         if (err) {
-            logger.error(`Error fetching transaction by ID: ${err}`);
-            response.json(err);
+            logger.error(`Error fetching transaction by ID: ${err}`); // Kirjataan virhe
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Fetched transaction by ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Fetched transaction by ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan tapahtuma
         }
     });
 });
@@ -103,14 +103,14 @@ router.get('/:id', restrictToAdmin, function(request, response) {
  *               items:
  *                 type: object
  */
-router.get('/account/:id', restrictToAdmin, function(request, response) {
+router.get('/account/:id', restrictToAdmin, function(request, response) { // Reitti, joka hakee tapahtumat tilin ID:n perusteella (adminin oikeuksilla)
     transaction.getByAccount(request.params.id, function(err, result) {
         if (err) {
-            logger.error(`Error fetching transactions by account ID: ${err}`);
-            response.json(err);
+            logger.error(`Error fetching transactions by account ID: ${err}`); // Kirjataan virhe
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Fetched transactions by account ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Fetched transactions by account ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan tapahtumat
         }
     });
 });
@@ -149,14 +149,14 @@ router.get('/account/:id', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.post('/', restrictToAdmin, function(request, response) {
+router.post('/', restrictToAdmin, function(request, response) { // Reitti, joka lisää uuden tapahtuman (adminin oikeuksilla)
     transaction.add(request.body, function(err, result) {
         if (err) {
-            logger.error(`Error adding transaction: ${err}`);
-            response.json(err);
+            logger.error(`Error adding transaction: ${err}`); // Kirjataan virhe, jos lisäys epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info('Added new transaction');
-            response.json(result);
+            logger.info('Added new transaction'); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan lisätty tapahtuma
         }
     });
 });
@@ -202,14 +202,14 @@ router.post('/', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.put('/:id', restrictToAdmin, function(request, response) {
+router.put('/:id', restrictToAdmin, function(request, response) { // Reitti, joka päivittää tapahtuman ID:n perusteella (adminin oikeuksilla)
     transaction.update(request.params.id, request.body, function(err, result) {
         if (err) {
-            logger.error(`Error updating transaction: ${err}`);
-            response.json(err);
+            logger.error(`Error updating transaction: ${err}`); // Kirjataan virhe, jos päivitys epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Updated transaction with ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Updated transaction with ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan päivitetty tapahtuma
         }
     });
 });
@@ -237,16 +237,16 @@ router.put('/:id', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.delete('/:id', restrictToAdmin, function(request, response) {
+router.delete('/:id', restrictToAdmin, function(request, response) { // Reitti, joka poistaa tapahtuman ID:n perusteella (adminin oikeuksilla)
     transaction.delete(request.params.id, function(err, result) {
         if (err) {
-            logger.error(`Error deleting transaction: ${err}`);
-            response.json(err);
+            logger.error(`Error deleting transaction: ${err}`); // Kirjataan virhe, jos poisto epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Deleted transaction with ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Deleted transaction with ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan poistettu tapahtuma
         }
     });
 });
 
-module.exports = router;
+module.exports = router; // Viedään reititin ulos käyttöön

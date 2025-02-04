@@ -1,17 +1,17 @@
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc'); // Tuodaan swagger-jsdoc-kirjasto Swagger-dokumentaation luomiseen
+const swaggerUi = require('swagger-ui-express'); // Tuodaan swagger-ui-express-kirjasto Swagger-käyttöliittymän näyttämiseen
 
 const options = {
     definition: {
-        openapi: '3.0.0',
+        openapi: '3.0.0', // Määritellään OpenAPI-versio
         info: {
-            title: 'Bank Automat API',
-            version: '1.0.0',
-            description: 'API documentation for the Bank Automat project',
+            title: 'Bank Automat API', // API:n nimi
+            version: '1.0.0', // API:n versio
+            description: 'API documentation for the Bank Automat project', // Lyhyt kuvaus API:sta
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: 'http://localhost:3000', // API-palvelimen URL
             },
         ],
         components: {
@@ -87,10 +87,10 @@ const options = {
             },
         ],
     },
-    apis: ['./routes/*.js'], // Path to the API docs
+    apis: ['./routes/*.js'], // Polku API-dokumentaatiolle
 };
 
-const specs = swaggerJsdoc(options);
+const specs = swaggerJsdoc(options); // Luodaan Swagger-dokumentaatio annetuilla asetuksilla
 
 module.exports = {
     swaggerUi,

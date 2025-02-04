@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
-const user = require('../models/user_model');
-const logger = require('../logger');
+const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollistaa web-palvelimen luomisen
+const router = express.Router(); // Luodaan uusi reititin Expressille
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware'); // Tuodaan autentikointimiddlewaret, jotka tarkistavat käyttäjän tokenin ja rajoittavat pääsyn adminille
+const user = require('../models/user_model'); // Tuodaan user-modeli, joka sisältää tietokantahaku- ja käsittelytoimintoja
+const logger = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
 
-router.use(verifyToken);
+router.use(verifyToken); // Lisätään verifyToken middleware, joka tarkistaa käyttäjän tunnistautumisen ennen pääsyä reitteihin
 
 /**
  * @swagger
@@ -31,14 +31,14 @@ router.use(verifyToken);
  *               items:
  *                 type: object
  */
-router.get('/', restrictToAdmin, function(request, response) {
+router.get('/', restrictToAdmin, function(request, response) { // Reitti, joka hakee kaikki käyttäjät (adminin oikeuksilla)
     user.getAll(function(err, result) {
         if (err) {
-            logger.error(`Error fetching users: ${err}`);
-            response.json(err);
+            logger.error(`Error fetching users: ${err}`); // Kirjataan virhe, jos käyttäjien haku epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info('Fetched all users');
-            response.json(result);
+            logger.info('Fetched all users'); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan käyttäjät
         }
     });
 });
@@ -66,14 +66,14 @@ router.get('/', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', restrictToAdmin, function(request, response) {
+router.get('/:id', restrictToAdmin, function(request, response) { // Reitti, joka hakee käyttäjän ID:n perusteella (adminin oikeuksilla)
     user.getById(request.params.id, function(err, result) {
         if (err) {
-            logger.error(`Error fetching user by ID: ${err}`);
-            response.json(err);
+            logger.error(`Error fetching user by ID: ${err}`); // Kirjataan virhe
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Fetched user by ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Fetched user by ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan käyttäjä
         }
     });
 });
@@ -107,14 +107,14 @@ router.get('/:id', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.post('/', restrictToAdmin, function(request, response) {
+router.post('/', restrictToAdmin, function(request, response) { // Reitti, joka lisää uuden käyttäjän (adminin oikeuksilla)
     user.add(request.body, function(err, result) {
         if (err) {
-            logger.error(`Error adding user: ${err}`);
-            response.json(err);
+            logger.error(`Error adding user: ${err}`); // Kirjataan virhe, jos lisäys epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info('Added new user');
-            response.json(result);
+            logger.info('Added new user'); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan lisätty käyttäjä
         }
     });
 });
@@ -155,14 +155,14 @@ router.post('/', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.put('/:id', restrictToAdmin, function(request, response) {
+router.put('/:id', restrictToAdmin, function(request, response) { // Reitti, joka päivittää käyttäjän ID:n perusteella (adminin oikeuksilla)
     user.update(request.params.id, request.body, function(err, result) {
         if (err) {
-            logger.error(`Error updating user: ${err}`);
-            response.json(err);
+            logger.error(`Error updating user: ${err}`); // Kirjataan virhe, jos päivitys epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Updated user with ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Updated user with ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan päivitetty käyttäjä
         }
     });
 });
@@ -190,16 +190,16 @@ router.put('/:id', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.delete('/:id', restrictToAdmin, function(request, response) {
+router.delete('/:id', restrictToAdmin, function(request, response) { // Reitti, joka poistaa käyttäjän ID:n perusteella (adminin oikeuksilla)
     user.delete(request.params.id, function(err, result) {
         if (err) {
-            logger.error(`Error deleting user: ${err}`);
-            response.json(err);
+            logger.error(`Error deleting user: ${err}`); // Kirjataan virhe, jos poisto epäonnistuu
+            response.json(err); // Palautetaan virhe
         } else {
-            logger.info(`Deleted user with ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Deleted user with ID: ${request.params.id}`); // Kirjataan onnistuminen
+            response.json(result); // Palautetaan poistettu käyttäjä
         }
     });
 });
 
-module.exports = router;
+module.exports = router; // Viedään reititin ulos käyttöön

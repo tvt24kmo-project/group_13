@@ -1,177 +1,122 @@
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-const card = require('../models/card_model');
-const account = require('../models/account_model');
-const user = require('../models/user_model');
-const Transaction = require('../models/transaction_model');
+const jwt = require('jsonwebtoken'); // Tuodaan jsonwebtoken-kirjasto, joka mahdollistaa JWT-tokenien luomisen ja tarkistamisen
+const dotenv = require('dotenv'); // Tuodaan dotenv-kirjasto, joka lataa ympäristömuuttujat .env-tiedostosta
+const card = require('../models/card_model'); // Tuodaan korttimalli, joka käsittelee kortteihin liittyviä tietokantakyselyitä
+const account = require('../models/account_model'); // Tuodaan tilimalli, joka käsittelee tileihin liittyviä tietokantakyselyitä
+const Transaction = require('../models/transaction_model'); // Tuodaan transaktiomalli, joka käsittelee transaktioihin liittyviä tietokantakyselyitä
 
-dotenv.config();
+dotenv.config(); // Ladataan ympäristömuuttujat .env-tiedostosta käyttöön
 
-function verifyToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) {
-        console.error('Token is required');
-        return res.status(403).send('Token is required');
+function verifyToken(req, res, next) { // Middleware-funktio, joka tarkistaa ja vahvistaa käyttäjän JWT-tokenin
+    const authHeader = req.headers['authorization']; // Haetaan Authorization-header pyynnöstä
+    const token = authHeader && authHeader.split(' ')[1]; // Erotetaan token muodosta "Bearer TOKEN"
+    if (!token) { // Jos tokenia ei ole, palautetaan virhe
+        console.error('Token is required'); // Tulostetaan virheilmoitus palvelimen konsoliin
+        return res.status(403).send('Token is required'); // Lähetetään HTTP 403 -virhekoodi asiakkaalle
     }
 
-    console.log('Verifying token:', token);
-    jwt.verify(token, process.env.MY_TOKEN, (err, decoded) => {
-        if (err) {
-            console.error('Token verification error:', err);
-            return res.status(403).send('Invalid token');
+    console.log('Verifying token:', token); // Tulostetaan token lokiin tarkistusta varten
+    jwt.verify(token, process.env.MY_TOKEN, (err, decoded) => { // Tarkistetaan tokenin oikeellisuus salaisella avaimella
+        if (err) { // Jos token on virheellinen, palautetaan virhe 
+            console.error('Token verification error:', err); // Tulostetaan virheilmoitus
+            return res.status(403).send('Invalid token'); // Palautetaan HTTP 403 -virhekoodi
         }
-        req.user = decoded;
-        next();
+        req.user = decoded; // Jos token on kelvollinen, tallennetaan käyttäjätiedot requestiin
+        next(); // Jatketaan seuraavaan middlewareen
     });
 }
 
-function restrictToATM(req, res, next) {
-    const allowedRoutes = ['/atm/accounts', '/atm/select-account', '/atm/withdraw', '/atm/transactions', '/atm/balance'];
-    if (allowedRoutes.includes(req.path)) {
-        return next();
+function restrictToATM(req, res, next) { // Middleware-funktio, joka sallii vain tietyt ATM-reitit
+    const allowedRoutes = ['/atm/accounts', '/atm/select-account', '/atm/withdraw', '/atm/transactions', '/atm/balance']; // Lista sallituista ATM-reiteistä
+    if (allowedRoutes.includes(req.path)) { // Tarkistetaan, kuuluuko nykyinen reitti sallittuihin
+        return next(); // Jos kuuluu, siirrytään eteenpäin
     }
-    return res.sendStatus(403);
+    return res.sendStatus(403); // Jos ei kuulu, palautetaan HTTP 403 -virhe Forbidden
 }
 
-function restrictToUserAssets(req, res, next) {
-    if (req.user.role === 'user') {
-        const card_number = req.user.card_number;
-        card.getUserAssets(card_number, (err, assets) => {
-            if (err) return res.status(500).send('Error fetching user assets');
-            const accountIds = assets.map(asset => asset.id_account);
-            req.user.assets = {
-                accounts: accountIds
-            };
-            // Fetch the user ID associated with the card
-            card.getByCardNumber(card_number, (err, cardResult) => {
-                if (err) return res.status(500).send('Error fetching card information');
-                if (cardResult.length > 0) {
-                    req.user.id_user = cardResult[0].id_user;
-                }
-                next();
-            });
+function checkCardAccess(req, res, next) { // Middleware-funktio, joka tarkistaa, onko käyttäjällä pääsy tiettyyn korttiin
+    if (req.user.role === 'admin') { // Jos käyttäjä on admin, annetaan pääsy automaattisesti
+        return next(); // Siirrytään seuraavaan middlewareen
+    }
+    if (req.user.role === 'user') { // Jos käyttäjä on tavallinen käyttäjä
+        const requestedCardId = req.params.id; // Haetaan pyydetty kortti-ID URL-parametrista
+        console.log('Checking access for card ID:', requestedCardId); // Lokitetaan tarkistettava kortti-ID
+        card.getById(requestedCardId, (err, result) => { // Haetaan kortti tietokannasta kortti-ID:n perusteella
+            if (err) { // Jos tietokantahaussa tapahtuu virhe (esim. yhteysongelma)
+                console.error('Error fetching card by ID:', err); // Tulostetaan virhe palvelimen lokiin
+                return res.status(500).send('Internal server error'); // Palautetaan HTTP 500 -virhe
+            }
+            if (!result.length) { // Jos korttia ei löydy annetulla ID:llä
+                console.log('Card not found or access denied'); // Lokitetaan tieto, että korttia ei löytynyt
+                return res.status(403).send('Access denied'); // Estetään pääsy HTTP 403 -virheellä
+            }
+            const accountId = result[0].id_account; // Haetaan korttiin liittyvän tilin ID
+            console.log('Fetched account ID:', accountId); // Lokitetaan haettu tili-ID
+            console.log('User assets:', req.user.assets); // Lokitetaan käyttäjän hallussa olevat resurssit
+            if (!req.user.assets.accounts.includes(accountId)) { // Jos korttiin liittyvä tili ei kuulu käyttäjälle
+                console.log('Access denied for account ID:', accountId); // Tulostetaan lokiin, että pääsy on estetty
+                return res.status(403).send('Access denied'); // Lähetetään selaimelle virheilmoitus (403 = pääsy estetty)
+            }
+            next(); // Jos kaikki ehdot täyttyvät, siirrytään seuraavaan middlewareen
         });
     } else {
-        next();
+        next(); // Jos käyttäjä ei ole "admin" tai "user", jatketaan normaalisti seuraavaan middlewareen
     }
 }
 
-function checkUserAccess(req, res, next) {
-    if (req.user.role === 'admin') {
-        return next();
+function checkAccountAccess(req, res, next) { // Middleware-funktio, joka tarkistaa, onko käyttäjällä pääsy tiettyyn tiliin
+    if (req.user.role === 'admin') { // Jos käyttäjä on admin, hänellä on automaattisesti pääsy
+        return next(); // Siirrytään seuraavaan middlewareen ilman tarkistuksia
     }
-    if (req.user.role === 'user') {
-        const requestedId = req.params.id;
-        console.log('Checking access for ID:', requestedId);
-        user.getById(requestedId, (err, result) => {
-            if (err) {
-                console.error('Error fetching user by ID:', err);
-                return res.status(500).send('Internal server error');
+    if (req.user.role === 'user') { // Jos käyttäjä on tavallinen käyttäjä
+        const requestedAccountId = req.params.id; // Haetaan pyydetyn tilin ID URL-parametrista
+        console.log('Checking access for account ID:', requestedAccountId); // Lokitetaan tarkistettava tili-ID
+        account.getById(requestedAccountId, (err, result) => { // Haetaan tilin tiedot tietokannasta
+            if (err) { // Jos tietokantakyselyssä tapahtuu virhe
+                console.error('Error fetching account by ID:', err); // Tulostetaan virhe palvelimen lokiin
+                return res.status(500).send('Internal server error'); // Lähetetään selaimelle virheilmoitus (500 = palvelinvirhe)
             }
-            if (!result.length) {
-                console.log('User not found or access denied');
-                return res.status(403).send('Access denied');
+            if (!result.length) { // Jos tiliä ei löydy annetulla ID:llä
+                console.log('Account not found or access denied'); // Tulostetaan lokiin, että tiliä ei löytynyt tai käyttö on estetty
+                return res.status(403).send('Access denied'); // Lähetetään selaimelle virheilmoitus (403 = pääsy estetty)
             }
-            const userId = result[0].id_user;
-            console.log('Fetched user ID:', userId);
-            console.log('User assets:', req.user.assets);
-            if (req.user.id_user !== userId) {
-                console.log('Access denied for user ID:', userId);
-                return res.status(403).send('Access denied');
+            const accountId = result[0].id_account; // Haetaan tilin ID tietokannasta
+            console.log('Fetched account ID:', accountId); // Lokitetaan haettu tili-ID
+            console.log('User assets:', req.user.assets); // Lokitetaan käyttäjän omistamat resurssit
+            if (!req.user.assets.accounts.includes(accountId)) { // Jos käyttäjällä ei ole oikeutta tähän tiliin
+                console.log('Access denied for account ID:', accountId); // Tulostetaan lokiin, että pääsy on estetty
+                return res.status(403).send('Access denied'); // Lähetetään selaimelle virheilmoitus (403 = pääsy estetty)
             }
-            next();
+            next(); // Jos kaikki ehdot täyttyvät, siirrytään seuraavaan middlewareen
         });
     } else {
-        next();
+        next(); // Jos käyttäjä ei ole "admin" tai "user", jatketaan normaalisti seuraavaan middlewareen
     }
 }
 
-function checkCardAccess(req, res, next) {
-    if (req.user.role === 'admin') {
-        return next();
-    }
-    if (req.user.role === 'user') {
-        const requestedCardId = req.params.id;
-        console.log('Checking access for card ID:', requestedCardId);
-        card.getById(requestedCardId, (err, result) => {
-            if (err) {
-                console.error('Error fetching card by ID:', err);
-                return res.status(500).send('Internal server error');
-            }
-            if (!result.length) {
-                console.log('Card not found or access denied');
-                return res.status(403).send('Access denied');
-            }
-            const accountId = result[0].id_account;
-            console.log('Fetched account ID:', accountId);
-            console.log('User assets:', req.user.assets);
-            if (!req.user.assets.accounts.includes(accountId)) {
-                console.log('Access denied for account ID:', accountId);
-                return res.status(403).send('Access denied');
-            }
-            next();
-        });
-    } else {
-        next();
-    }
-}
+function checkTransactionAccess(req, res, next) { // Middleware-funktio, joka tarkistaa, onko käyttäjällä pääsy tiettyyn transaktioon
+    const userId = req.user.id; // Haetaan kirjautuneen käyttäjän ID
+    const transactionId = req.params.id; // Haetaan pyydetyn transaktion ID URL-parametrista
 
-function checkAccountAccess(req, res, next) {
-    if (req.user.role === 'admin') {
-        return next();
-    }
-    if (req.user.role === 'user') {
-        const requestedAccountId = req.params.id;
-        console.log('Checking access for account ID:', requestedAccountId);
-        account.getById(requestedAccountId, (err, result) => {
-            if (err) {
-                console.error('Error fetching account by ID:', err);
-                return res.status(500).send('Internal server error');
-            }
-            if (!result.length) {
-                console.log('Account not found or access denied');
-                return res.status(403).send('Access denied');
-            }
-            const accountId = result[0].id_account;
-            console.log('Fetched account ID:', accountId);
-            console.log('User assets:', req.user.assets);
-            if (!req.user.assets.accounts.includes(accountId)) {
-                console.log('Access denied for account ID:', accountId);
-                return res.status(403).send('Access denied');
-            }
-            next();
-        });
-    } else {
-        next();
-    }
-}
-
-function checkTransactionAccess(req, res, next) {
-    const userId = req.user.id;
-    const transactionId = req.params.id;
-
-    Transaction.getById(transactionId, (err, transaction) => {
-        if (err || !transaction) {
-            return res.sendStatus(403);
+    Transaction.getById(transactionId, (err, transaction) => { // Haetaan transaktio tietokannasta
+        if (err || !transaction) { // Jos tapahtuu virhe tai transaktiota ei löydy
+            return res.sendStatus(403); // Estetään pääsy ja palautetaan 403 (pääsy estetty)
         }
 
-        Account.getById(transaction.id_account, (err, account) => {
-            if (err || !account || account.id_user !== userId) {
-                return res.sendStatus(403);
+        Account.getById(transaction.id_account, (err, account) => { // Haetaan transaktion liittyvä tili tietokannasta
+            if (err || !account || account.id_user !== userId) { // Jos tiliä ei löydy tai käyttäjä ei omista sitä
+                return res.sendStatus(403); // Estetään pääsy ja palautetaan 403 (pääsy estetty)
             }
-
-            next();
+            next(); // Jos kaikki ehdot täyttyvät, siirrytään seuraavaan middlewareen
         });
     });
 }
 
-function restrictToAdmin(req, res, next) {
-    if (req.user && req.user.role === 'admin') {
-        return next();
+function restrictToAdmin(req, res, next) { // Middleware-funktio, joka rajoittaa pääsyn vain admin-käyttäjille
+    if (req.user && req.user.role === 'admin') { // Jos käyttäjä on kirjautunut ja hänen roolinsa on "admin"
+        return next(); // Siirrytään seuraavaan middlewareen ilman rajoituksia
     }
-    return res.sendStatus(403);
+    return res.sendStatus(403); // Jos käyttäjä ei ole admin, estetään pääsy ja palautetaan 403 (pääsy estetty)
 }
 
-module.exports = { verifyToken, restrictToATM, restrictToUserAssets, checkUserAccess, checkCardAccess, checkAccountAccess, checkTransactionAccess, restrictToAdmin };
+module.exports = { verifyToken, restrictToATM, checkCardAccess, checkAccountAccess, checkTransactionAccess, restrictToAdmin }; // Viedään kaikki funktiot käytettäväksi muissa tiedostoissa
 

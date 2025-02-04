@@ -1,6 +1,6 @@
 SQL_SERVER=mysql://<username>:<password>@localhost:3306/bank-automat
 PORT=3000
 MY_TOKEN=your_jwt_secret
-ADMIN_USERNAME='<admin_username>'
-ADMIN_PASSWORD='<admin_password>'
+INITIAL_ADMIN_USERNAME='<admin_username>'
+INITIAL_ADMIN_PASSWORD='<admin_password>'
 LOG_PATH=./logs

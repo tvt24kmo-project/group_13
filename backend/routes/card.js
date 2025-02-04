@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware');
-const card = require('../models/card_model');
-const logger = require('../logger');
+const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollistaa web-palvelimen luomisen
+const router = express.Router(); // Luodaan uusi reititin Expressille, joka auttaa määrittämään HTTP-reittejä
+const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware'); // Tuodaan toiminnot käyttäjän autentikointiin ja roolien rajoittamiseen
+const card = require('../models/card_model'); // Tuodaan Card-malli, joka hallitsee korttitietokannan toimintaa
+const logger = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
 
-router.use(verifyToken);
+router.use(verifyToken); // Käytetään verifyToken-middlewarea varmistaaksemme, että käyttäjällä on voimassa oleva tunniste ennen reitteihin pääsyä
 
 /**
  * @swagger
@@ -31,14 +31,14 @@ router.use(verifyToken);
  *               items:
  *                 type: object
  */
-router.get('/', restrictToAdmin, function(request, response) {
-    card.getAll(function(err, result) {
-        if (err) {
-            logger.error(`Error fetching cards: ${err}`);
-            response.json(err);
+router.get('/', restrictToAdmin, function(request, response) { // Reitti, joka hakee kaikki kortit
+    card.getAll(function(err, result) { // Haetaan kaikki kortit Card-mallin getAll-funktiolla
+        if (err) { // Jos virhe ilmenee tietokannan kyselyssä
+            logger.error(`Error fetching cards: ${err}`); // Kirjataan virhe lokiin
+            response.json(err); // Palautetaan virheilmoitus
         } else {
-            logger.info('Fetched all cards');
-            response.json(result);
+            logger.info('Fetched all cards'); // Kirjataan onnistunut pyyntö lokiin
+            response.json(result); // Palautetaan korttien tiedot vastauksessa
         }
     });
 });
@@ -66,14 +66,14 @@ router.get('/', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.get('/:id', restrictToAdmin, function(request, response) {
-    card.getById(request.params.id, function(err, result) {
-        if (err) {
-            logger.error(`Error fetching card by ID: ${err}`);
-            response.json(err);
+router.get('/:id', restrictToAdmin, function(request, response) { // Reitti, joka hakee kortin ID:n perusteella
+    card.getById(request.params.id, function(err, result) { // Haetaan kortti Card-mallin getById-funktiolla kortin ID:n perusteella
+        if (err) { // Jos virhe ilmenee kortin hakemisessa
+            logger.error(`Error fetching card by ID: ${err}`); // Kirjataan virhe lokiin
+            response.json(err); // Palautetaan virheilmoitus
         } else {
-            logger.info(`Fetched card by ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Fetched card by ID: ${request.params.id}`); // Kirjataan onnistunut kortin haku lokiin
+            response.json(result); // Palautetaan haettu kortti vastauksessa
         }
     });
 });
@@ -107,14 +107,14 @@ router.get('/:id', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.post('/', restrictToAdmin, function(request, response) {
-    card.add(request.body, function(err, result) {
-        if (err) {
-            logger.error(`Error adding card: ${err}`);
-            response.json(err);
+router.post('/', restrictToAdmin, function(request, response) { // Reitti, joka lisää uuden kortin
+    card.add(request.body, function(err, result) { // Lisätään kortti Card-mallin add-funktiolla
+        if (err) { // Jos virhe ilmenee kortin lisäämisessä
+            logger.error(`Error adding card: ${err}`); // Kirjataan virhe lokiin
+            response.json(err); // Palautetaan virheilmoitus
         } else {
-            logger.info('Added new card');
-            response.json(result);
+            logger.info('Added new card'); // Kirjataan onnistunut kortin lisäys lokiin
+            response.json(result); // Palautetaan lisätty kortti vastauksessa
         }
     });
 });
@@ -153,14 +153,14 @@ router.post('/', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.put('/:id', restrictToAdmin, function(request, response) {
-    card.update(request.params.id, request.body, function(err, result) {
-        if (err) {
-            logger.error(`Error updating card: ${err}`);
-            response.json(err);
+router.put('/:id', restrictToAdmin, function(request, response) { // Reitti, joka päivittää kortin tiedot
+    card.update(request.params.id, request.body, function(err, result) { // Päivitetään kortti Card-mallin update-funktiolla kortin ID:n ja uusien tietojen perusteella
+        if (err) { // Jos virhe ilmenee kortin päivittämisessä
+            logger.error(`Error updating card: ${err}`); // Kirjataan virhe lokiin
+            response.json(err); // Palautetaan virheilmoitus
         } else {
-            logger.info(`Updated card with ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Updated card with ID: ${request.params.id}`); // Kirjataan onnistunut kortin päivitys lokiin
+            response.json(result); // Palautetaan päivitetty kortti vastauksessa
         }
     });
 });
@@ -188,16 +188,16 @@ router.put('/:id', restrictToAdmin, function(request, response) {
  *             schema:
  *               type: object
  */
-router.delete('/:id', restrictToAdmin, function(request, response) {
-    card.delete(request.params.id, function(err, result) {
-        if (err) {
-            logger.error(`Error deleting card: ${err}`);
-            response.json(err);
+router.delete('/:id', restrictToAdmin, function(request, response) { // Reitti, joka poistaa kortin ID:n perusteella
+    card.delete(request.params.id, function(err, result) { // Poistetaan kortti Card-mallin delete-funktiolla kortin ID:n perusteella
+        if (err) { // Jos virhe ilmenee kortin poistamisessa
+            logger.error(`Error deleting card: ${err}`); // Kirjataan virhe lokiin
+            response.json(err); // Palautetaan virheilmoitus
         } else {
-            logger.info(`Deleted card with ID: ${request.params.id}`);
-            response.json(result);
+            logger.info(`Deleted card with ID: ${request.params.id}`); // Kirjataan onnistunut kortin poisto lokiin
+            response.json(result); // Palautetaan poistetun kortin tiedot vastauksessa
         }
     });
 });
 
-module.exports = router;
+module.exports = router; // Viedään reititin ulos käyttöön
