@@ -1,61 +1,52 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express'); // Tuodaan Express-kirjasto
+const path = require('path'); // Tuodaan path-kirjasto tiedostopolkujen käsittelyyn
+const cookieParser = require('cookie-parser'); // Tuodaan cookie-parser middleware evästeiden käsittelyyn
+const session = require('express-session'); // Tuodaan express-session middleware sessioiden hallintaan
+const morgan = require('morgan'); // Tuodaan morgan middleware HTTP-pyyntöjen lokitukseen
+const dotenv = require('dotenv'); // Tuodaan dotenv-kirjasto ympäristömuuttujien hallintaan
+const jwt = require('jsonwebtoken'); // Tuodaan jsonwebtoken-kirjasto JWT-tunnisteiden luomiseen ja tarkistamiseen
+const { swaggerUi, specs } = require('./swagger'); // Tuodaan Swagger-dokumentaation asetukset
+const atmRouter = require('./routes/atm'); // Tuodaan ATM-reititin
+const adminRouter = require('./routes/admin'); // Tuodaan admin-reititin
+const userRouter = require('./routes/user'); // Tuodaan user-reititin
+const accountRouter = require('./routes/account'); // Tuodaan account-reititin
+const cardAccountRouter = require('./routes/card_account'); // Tuodaan card_account-reititin
+const cardRouter = require('./routes/card'); // Tuodaan card-reititin
+const transactionRouter = require('./routes/transaction'); // Tuodaan transaction-reititin
+const cardLoginRouter = require('./routes/card_login'); // Tuodaan card_login-reititin
+const adminLoginRouter = require('./routes/admin_login'); // Tuodaan admin_login-reititin
+const { logRequests } = require('./logger'); // Tuodaan logRequests middleware pyyntöjen lokitukseen
+const { verifyToken, restrictToAdmin } = require('./middleware/auth_middleware'); // Tuodaan autentikointimiddlewaret
 
-var indexRouter = require('./routes/index');
-var userRouter = require('./routes/user');
-var accountRouter = require('./routes/account');
-var cardAccountRouter = require('./routes/card_account');
-var cardRouter = require('./routes/card');
-var transactionRouter = require('./routes/transaction');
-var loginRouter = require('./routes/login');
-const jwt = require('jsonwebtoken');
+dotenv.config(); // Ladataan ympäristömuuttujat .env-tiedostosta
 
-var app = express();
+const app = express(); // Luodaan uusi Express-sovellus
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(morgan('dev')); // Käytetään morgan-middlewarea HTTP-pyyntöjen lokitukseen
+app.use(express.json()); // Käytetään express.json-middlewarea JSON-pyyntöjen käsittelyyn
+app.use(express.urlencoded({ extended: false })); // Käytetään express.urlencoded-middlewarea URL-enkoodattujen pyyntöjen käsittelyyn
+app.use(cookieParser()); // Käytetään cookie-parser-middlewarea evästeiden käsittelyyn
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'default_secret', // Määritellään session salaisuus
+    resave: false, // Estetään session uudelleentallennus jokaisen pyynnön yhteydessä
+    saveUninitialized: true, // Tallennetaan uusi sessio, vaikka se ei olisi alustettu
+    cookie: { secure: false } // Määritellään, että evästeitä ei tarvitse lähettää vain suojatuissa yhteyksissä
+}));
+app.use(express.static(path.join(__dirname, 'public'))); // Määritellään julkinen hakemisto staattisille tiedostoille
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs)); // Määritellään Swagger-dokumentaation reitti
 
-app.use('/', indexRouter);
-app.use('/login', loginRouter);
-app.use(authenticateToken);
-app.use('/user', userRouter);
-app.use('/account', accountRouter);
-app.use('/card_account', cardAccountRouter);
-app.use(authenticateToken);
-app.use('/card',cardRouter);
-app.use('/transaction', transactionRouter);
+app.use(logRequests); // Käytetään logRequests-middlewarea pyyntöjen lokitukseen
 
+app.use('/card_login', cardLoginRouter); // Määritellään card_login-reitti
+app.use('/atm', atmRouter); // Määritellään ATM-reitti
+app.use('/admin_login', adminLoginRouter); // Määritellään admin_login-reitti
 
-function authenticateToken(req, res, next) {   //etsii ja poimii bearer tokenin.
-                                          
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1] //luento1 kohdasta 2h51 min. postman-bearer token riisutaan. **lisää alla
-                                                     
-    console.log("token = "+token);
-     jwt.verify(token, process.env.MY_TOKEN, function(err, card) { //tässä on .env.MY_TOKEN ja myös login.js-tiedostossa. alempana tässä tietoa lisää* 
-        if (err) return res.sendStatus(403)
+app.use('/admin', adminRouter); // Määritellään admin-reitti
+app.use('/user', verifyToken, restrictToAdmin, userRouter); // Määritellään user-reitti, joka vaatii autentikoinnin ja admin-oikeudet
+app.use('/account', verifyToken, restrictToAdmin, accountRouter); // Määritellään account-reitti, joka vaatii autentikoinnin ja admin-oikeudet
+app.use('/card_account', verifyToken, restrictToAdmin, cardAccountRouter); // Määritellään card_account-reitti, joka vaatii autentikoinnin ja admin-oikeudet
+app.use('/card', verifyToken, restrictToAdmin, cardRouter); // Määritellään card-reitti, joka vaatii autentikoinnin ja admin-oikeudet
+app.use('/transactions', verifyToken, restrictToAdmin, transactionRouter); // Määritellään transactions-reitti, joka vaatii autentikoinnin ja admin-oikeudet
 
-            req.card = card
-          
-            next()
-    })
-}
-
-//Kun tämä authenticateToken ominaisuus on nyt lisätty ja yritetään postmanissa esim käyttää operaatiota GET allcards> tulee lukemaan "401 unauthorized".
-// >> 1 Login pyynnön lähetys SEND (postman) //eli siis ensin tietty add request> POST -login>SEND
-// 2 kopioi talteen token.(postman)
-//3 mene bank-automat juureen ja kohdasta authorization (postman)
-//4 auth type> bearer token
-//5 kohtaan "Token" kopioidaan token. ja save.
-//6. sitten metodit pitäisi taas toimia oikein.
-//**kun tehdään Qt-sovellusta ja loginia,meidän pitää itse lisätä sana bearer, tokenin eteen jotta authenticateToken-metodi toimii.
-
-//tokenin lisääminen koodiin: kirjoitetaan komento backendistä "node create_token.js>>.env"pitäisi tulla suoraan env-tiedostoon generoitu token.
-// tokenin generoinnista luento 1 kohta 2h 30 min. 
-module.exports = app;
+module.exports = app; // Viedään Express-sovellus ulos käyttöön
