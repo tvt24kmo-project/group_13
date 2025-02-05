@@ -20,6 +20,10 @@ class Login : public QDialog
 public:
     explicit Login(QWidget *parent = nullptr);
     ~Login();
+private:
+    QNetworkAccessManager *balanceManager;
+    QNetworkAccessManager *transactionsManager;
+    QNetworkAccessManager *withdrawalManager;
 
 public slots:
     void showTime();
@@ -34,6 +38,13 @@ private slots:
     void on_btn_balance_clicked();
 
     void on_btn_transactions_clicked();
+
+   // void getBalance();
+   //void getTransactions();
+    void makeWithdrawal();
+    void handleBalanceResponse(QNetworkReply *reply);
+    void handleTransactionsResponse(QNetworkReply *reply);
+    void handleWithdrawalResponse(QNetworkReply *reply);
 
 
 
@@ -50,6 +61,10 @@ private slots:
     void on_btn_50_clicked();
 
     void on_btn_100_clicked();
+
+    void on_btnLogout_clicked();
+
+    void on_btn_confirm_clicked();
 
 private:
     Ui::Login *ui;
