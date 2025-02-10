@@ -1,10 +1,9 @@
-#include "environment.h"
+#include <QtCore/QString> // Sisällytetään Qt:n QString-luokka, jota käytetään merkkijonojen käsittelyyn.
+#include "environment.h" // Sisällytetään environment.h-tiedosto, jossa Environment-luokka on määritelty.
 
-Environment::Environment() {}
+Environment::Environment() {} // Environment-luokan konstruktori. Ei suorita mitään erityistä, vain alustaa olion.
 
-QString Environment::base_url()
+QString Environment::base_url() // Määritellään base_url-metodi, joka palauttaa QString-tyyppisen arvon.
 {
-    return "http://localhost:3307";                 // tämä on staattinen koska voidaan kutsua metodia ilman että
-                                                    //luodaan oliota environment-luokasta.
-    //return "http://azure.kkkkkk";//esimerkki
+    return "https://bank.sara.vehvilainen.cc:3000";  // Palautetaan kovakoodattu URL-osoite merkkijonona.
 }

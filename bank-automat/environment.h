@@ -1,8 +1,7 @@
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
-#include <qstring.h>
-
+#include <QtCore/QString>  // Korjataan polku QtCore-moduulin kautta
 
 class Environment
 {
