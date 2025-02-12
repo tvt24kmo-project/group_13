@@ -5,6 +5,7 @@ const Account = require('../models/account_model'); // Tuodaan Account-malli, jo
 const Transaction = require('../models/transaction_model'); // Tuodaan Transaction-malli, joka määrittelee tapahtumatietokannan rakenteen
 const CardAccount = require('../models/card_account_model'); // Tuodaan CardAccount-malli, joka määrittelee korttitilitietokannan rakenteen
 const User = require('../models/user_model'); // Tuodaan User-malli, joka määrittelee käyttäjätietokannan rakenteen
+const db = require('../database');  // Lisätään tietokantayhteys
 
 /**
  * @swagger
