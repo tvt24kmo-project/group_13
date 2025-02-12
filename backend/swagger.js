@@ -92,6 +92,74 @@ const options = {
 
 const specs = swaggerJsdoc(options); // Luodaan Swagger-dokumentaatio annetuilla asetuksilla
 
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: ATM
+ *     description: ATM operations including image retrieval
+ */
+
+/**
+ * @swagger
+ * /public/{filename}:
+ *   get:
+ *     summary: Get user's profile picture
+ *     tags: [ATM]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the image file (e.g., "jaakko-teppo.jpg")
+ *     responses:
+ *       200:
+ *         description: Image file
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: No active session or authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Valitse ensin tili
+ *                 error:
+ *                   type: string
+ *                   example: NO_ACCOUNT_SELECTED
+ *       403:
+ *         description: Access denied to this image
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Ei oikeutta tähän kuvaan
+ *                 error:
+ *                   type: string
+ *                   example: ACCESS_DENIED
+ */
+
 module.exports = {
     swaggerUi,
     specs,

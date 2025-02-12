@@ -3,3 +3,7 @@ bank-automat/build/
 bank-automat/*.user
 
 backend/.env
+
+backend/public/*.jpg
+backend/public/*.jpeg
+backend/public/*.png
