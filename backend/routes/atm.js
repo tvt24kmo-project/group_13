@@ -5,6 +5,7 @@ const Account = require('../models/account_model'); // Tuodaan Account-malli, jo
 const Transaction = require('../models/transaction_model'); // Tuodaan Transaction-malli, joka määrittelee tapahtumatietokannan rakenteen
 const CardAccount = require('../models/card_account_model'); // Tuodaan CardAccount-malli, joka määrittelee korttitilitietokannan rakenteen
 const User = require('../models/user_model'); // Tuodaan User-malli, joka määrittelee käyttäjätietokannan rakenteen
+const db = require('../database');  // Lisätään tietokantayhteys
 
 /**
  * @swagger
@@ -320,6 +321,60 @@ router.post('/logout', (req, res) => { // Reitti, joka kirjaa käyttäjän ulos
             }
             res.status(200).json({ message: 'Logout successful' }); // Palautetaan statuskoodi 200 ja onnistumisilmoitus
         });
+    });
+});
+
+/**
+ * @swagger
+ * /atm/getUserData:
+ *   get:
+ *     summary: Get user data for the currently selected account
+ *     tags: [ATM]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 firstname:
+ *                   type: string
+ *                 lastname:
+ *                   type: string
+ *                 pic_path:
+ *                   type: string
+ *       400:
+ *         description: No account selected
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/getUserData', (req, res) => {
+    const accountId = req.session.selectedAccountId;
+
+    if (!accountId) {
+        return res.status(400).json({ message: 'No account selected' });
+    }
+
+    const query = `
+        SELECT user.firstname, user.lastname, user.pic_path
+        FROM user 
+        JOIN account ON user.id_user = account.id_user 
+        WHERE account.id_account = ?`;
+
+    db.query(query, [accountId], (err, results) => {
+        if (err) {
+            console.log('Database error:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json(results[0]);
     });
 });
 

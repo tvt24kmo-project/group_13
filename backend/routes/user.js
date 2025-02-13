@@ -2,7 +2,8 @@ const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollist
 const router = express.Router(); // Luodaan uusi reititin Expressille
 const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware'); // Tuodaan autentikointimiddlewaret, jotka tarkistavat käyttäjän tokenin ja rajoittavat pääsyn adminille
 const user = require('../models/user_model'); // Tuodaan user-modeli, joka sisältää tietokantahaku- ja käsittelytoimintoja
-const logger = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
+// Muutetaan logger importtaus
+const { logger } = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
 
 router.use(verifyToken); // Lisätään verifyToken middleware, joka tarkistaa käyttäjän tunnistautumisen ennen pääsyä reitteihin
 
@@ -33,7 +34,7 @@ router.use(verifyToken); // Lisätään verifyToken middleware, joka tarkistaa k
  */
 router.get('/', restrictToAdmin, function(request, response) { // Reitti, joka hakee kaikki käyttäjät (adminin oikeuksilla)
     user.getAll(function(err, result) {
-        if (err) {
+        if (err) {u
             logger.error(`Error fetching users: ${err}`); // Kirjataan virhe, jos käyttäjien haku epäonnistuu
             response.json(err); // Palautetaan virhe
         } else {
