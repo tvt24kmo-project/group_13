@@ -2,7 +2,7 @@ const express = require('express'); // Tuodaan Express-kirjasto, joka mahdollist
 const router = express.Router(); // Luodaan uusi reititin Expressille, joka auttaa määrittämään HTTP-reittejä
 const { verifyToken, restrictToAdmin } = require('../middleware/auth_middleware'); // Tuodaan autentikointimiddleware, joka tarkistaa käyttäjän tunnisteen ja rajoittaa pääsyn admin-käyttäjille
 const cardAccount = require('../models/card_account_model'); // Tuodaan CardAccount-malli, joka määrittelee korttitilitietokannan rakenteen
-const logger = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
+const { logger } = require('../logger'); // Tuodaan logger, joka mahdollistaa virheiden ja tapahtumien lokitiedostoon kirjaamisen
 
 router.use(verifyToken); // Käytetään verifyToken-middlewarea kaikille reiteille, joka varmistaa, että käyttäjä on autentikoitu
 

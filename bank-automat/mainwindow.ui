@@ -24,76 +24,83 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>20</number>
+    </property>
+    <property name="leftMargin">
+     <number>40</number>
+    </property>
+    <property name="rightMargin">
+     <number>40</number>
+    </property>
     <item>
-     <spacer name="verticalSpacer_top">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <spacer name="horizontalSpacer_left">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnstart">
+      <widget class="QLabel" name="imgLabel">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>300</width>
-          <height>80</height>
+          <width>400</width>
+          <height>300</height>
          </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-          <bold>true</bold>
-         </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(255, 255, 255);</string>
+         <string>
+          QLabel {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+          }
+         </string>
         </property>
-        <property name="text">
-         <string>Welcome to the bank!</string>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_right">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+        <property name="pixmap">
+         <pixmap>:/img/landing-picture.jpg</pixmap>
         </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
+        <property name="scaledContents">
+         <bool>false</bool>
         </property>
-       </spacer>
-      </item>
-     </layout>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+      </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnstart">
+      <property name="minimumSize">
+       <size>
+        <width>300</width>
+        <height>80</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+        QPushButton {
+          background-color: white;
+          color: black;
+          border-radius: 10px;
+          padding: 10px;
+        }
+        QPushButton:hover {
+          background-color: #f0f0f0;
+        }
+       </string>
+      </property>
+      <property name="text">
+       <string>Welcome to the bank!</string>
+      </property>
+     </widget>
     </item>
     <item>
      <spacer name="verticalSpacer_bottom">
