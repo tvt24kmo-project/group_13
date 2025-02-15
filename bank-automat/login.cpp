@@ -18,6 +18,11 @@ Login::Login(QWidget *parent)
     apiManager->setCookieJar(new QNetworkCookieJar(apiManager));
 
     showTime(); // näytetään aika
+
+    // Lisää logout timer
+    logoutTimer = new QTimer(this);
+    logoutTimer->setSingleShot(true);
+    connect(logoutTimer, &QTimer::timeout, this, &Login::autoLogout);
 }
 
 Login::~Login()
@@ -27,12 +32,33 @@ Login::~Login()
 
 void Login::on_btnLogin_clicked()
 {
-    // Poistetaan vanhat yhteydet ennen uutta kirjautumista
+    QString cardNumber = ui->text_card_number->text();
+    QString pin = ui->text_pin->text();
+
+    // Tarkista että korttinumero on syötetty
+    if (cardNumber.isEmpty()) {
+        ui->labelInfo->setText("Please enter card number");
+        return;
+    }
+
+    // Tarkista että PIN on syötetty ja on vähintään 4 merkkiä
+    if (pin.isEmpty()) {
+        ui->labelInfo->setText("Please enter PIN code");
+        return;
+    }
+
+    if (pin.length() < 4) {
+        ui->labelInfo->setText("PIN must be at least 4 digits");
+        ui->text_pin->clear();
+        return;
+    }
+
+    // Jos tarkistukset ok, jatka kirjautumiseen
     disconnect(apiManager, &QNetworkAccessManager::finished, 0, 0);
     
     QJsonObject jsonObj;
-    jsonObj.insert("card_number", ui->text_card_number->text());
-    jsonObj.insert("pin", ui->text_pin->text());
+    jsonObj.insert("card_number", cardNumber);
+    jsonObj.insert("pin", pin);
 
     QString site_url = Environment::base_url() + "/card_login";
     
@@ -49,38 +75,53 @@ void Login::on_btnLogin_clicked()
 
 void Login::handleLoginResponse(QNetworkReply *reply)
 {
-    if (reply->error() != QNetworkReply::NoError) {
-        qDebug() << "Login failed:" << reply->errorString();
-        ui->labelInfo->setText("Login failed: " + reply->errorString());
-        reply->deleteLater();
-        return;
-    }
+    if (reply->error() == QNetworkReply::NoError) {
+        // Onnistunut kirjautuminen
+        QByteArray response_data = reply->readAll();
+        QJsonDocument jsonResponse = QJsonDocument::fromJson(response_data);
+        QJsonObject jsonObj = jsonResponse.object();
 
-    QByteArray response_data = reply->readAll();
-    qDebug() << "Login response:" << response_data;
-    
-    QJsonDocument jsonResponse = QJsonDocument::fromJson(response_data);
-    QJsonObject jsonObj = jsonResponse.object();
-
-    if (jsonObj.contains("token")) {
-        authToken = jsonObj["token"].toString();
-        currentAccountType.clear();
-        ui->labelInfo->setText("Kirjautuminen OK");
-        
-        // Tallennetaan session cookie (vain kerran)
-        QList<QNetworkCookie> cookies = apiManager->cookieJar()->cookiesForUrl(QUrl(Environment::base_url()));
-        for (const QNetworkCookie &cookie : cookies) {
-            if (cookie.name() == "connect.sid") {
-                sessionCookie = cookie.toRawForm();
-                qDebug() << "Session cookie saved:" << sessionCookie;
+        if (jsonObj.contains("token")) {
+            authToken = jsonObj["token"].toString();
+            currentAccountType.clear();
+            ui->labelInfo->setText("Login successful");
+            
+            // Tallennetaan session cookie (vain kerran)
+            QList<QNetworkCookie> cookies = apiManager->cookieJar()->cookiesForUrl(QUrl(Environment::base_url()));
+            for (const QNetworkCookie &cookie : cookies) {
+                if (cookie.name() == "connect.sid") {
+                    sessionCookie = cookie.toRawForm();
+                    qDebug() << "Session cookie saved:" << sessionCookie;
+                }
             }
+
+            requestAccounts();
+        }
+    } else {
+        // Käsitellään virhetilanteet HTTP-koodin mukaan
+        int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QByteArray response_data = reply->readAll();
+        QJsonDocument jsonResponse = QJsonDocument::fromJson(response_data);
+        QJsonObject jsonObj = jsonResponse.object();
+        QString errorMessage = jsonObj["message"].toString();
+
+        switch(httpStatus) {
+            case 401:
+                ui->labelInfo->setText("Incorrect PIN");
+                break;
+            case 403:
+                ui->labelInfo->setText("Card is locked\nToo many incorrect attempts");
+                break;
+            case 500:
+                ui->labelInfo->setText("System error\nPlease try again later");
+                break;
+            default:
+                ui->labelInfo->setText("Login failed");
+                break;
         }
 
-        // Poistetaan vanha yhteys ennen uutta pyyntöä
-        disconnect(apiManager, &QNetworkAccessManager::finished, this, &Login::handleLoginResponse);
-        requestAccounts();
-    } else {
-        ui->labelInfo->setText("Väärä tunnus/salasana");
+        // Tyhjennä PIN-kenttä virhetilanteessa
+        ui->text_pin->clear();
     }
 
     reply->deleteLater();
@@ -195,15 +236,19 @@ void Login::selectAccount(const QString &accountType)
         if (jsonObj.contains("message") && jsonObj["message"].toString() == "Account selected successfully") {
             ui->labelInfo->setText("Account selected successfully");
             currentAccountType = accountType;
-            ui->stackedWidget->setCurrentIndex(MAIN_MENU_VIEW);
+            
+            // TÄRKEÄ MUUTOS: Haetaan käyttäjän tiedot ennen päävalikkoon siirtymistä
+            disconnect(apiManager, &QNetworkAccessManager::finished, 0, 0);
+            loadUserInfo();
+            qDebug() << "Waiting for user data...";
+            
+            resetLogoutTimer();  // Käynnistä ajastin kun kirjautuminen onnistuu
+            
         } else {
             ui->labelInfo->setText("Account selection failed");
         }
 
         reply->deleteLater();
-        
-        // Poistetaan tämä yhteys kun vastaus on käsitelty
-        disconnect(apiManager, &QNetworkAccessManager::finished, 0, 0);
     });
 
     apiManager->post(request, QJsonDocument(jsonObj).toJson());
@@ -233,6 +278,7 @@ void Login::on_btn_debit_clicked()
 // Nappi, joka siirtää näkymän balancelle
 void Login::on_btn_balance_clicked()
 {
+    resetLogoutTimer();
     ui->stackedWidget->setCurrentIndex(BALANCE_VIEW);
     QString site_url = Environment::base_url() + "/atm/balance";
     QNetworkRequest request(site_url);
@@ -252,8 +298,11 @@ void Login::handleBalanceResponse(QNetworkReply *reply)
     qDebug() << "Balance response raw data:" << response_data;
     
     if (reply->error() != QNetworkReply::NoError) {
-        qDebug() << "Network error:" << reply->errorString();
-        ui->label_balance_2->setText("Balance retrieval failed!");
+        if (reply->error() == QNetworkReply::AuthenticationRequiredError) {
+            ui->label_balance_2->setText("Session expired\nPlease login again");
+        } else {
+            ui->label_balance_2->setText("Unable to retrieve balance\nPlease try again");
+        }
         reply->deleteLater();
         return;
     }
@@ -308,6 +357,7 @@ void Login::handleBalanceResponse(QNetworkReply *reply)
 
 void Login::on_btn_transactions_clicked()
 {
+    resetLogoutTimer();
     ui->stackedWidget->setCurrentIndex(TRANSACTIONS_VIEW);
     currentTransactionPage = 1;  // Aloitetaan aina sivulta 1
     hasNextPage = true;  // Oletetaan aluksi että seuraava sivu on saatavilla
@@ -346,8 +396,11 @@ void Login::handleTransactionsResponse(QNetworkReply *reply)
     qDebug() << "Transactions response raw data:" << response_data;
 
     if (reply->error() != QNetworkReply::NoError) {
-        qDebug() << "Network error:" << reply->errorString();
-        ui->lbl_transactions->setText("Error loading transactions");
+        if (reply->error() == QNetworkReply::AuthenticationRequiredError) {
+            ui->lbl_transactions->setText("Session expired\nPlease login again");
+        } else {
+            ui->lbl_transactions->setText("Unable to load transactions\nPlease try again");
+        }
         reply->deleteLater();
         return;
     }
@@ -385,9 +438,11 @@ void Login::handleTransactionsResponse(QNetworkReply *reply)
         for (const QJsonValue &transaction : transactionsArray) {
             QJsonObject obj = transaction.toObject();
             
-            // Muunna päivämäärä luettavampaan muotoon
-            QDateTime dateTime = QDateTime::fromString(obj["date"].toString(), Qt::ISODate);
-            QString formattedDate = dateTime.toString("dd.MM.yyyy HH:mm");
+            // Muunna UTC aika paikalliseksi ajaksi
+            QDateTime utcDateTime = QDateTime::fromString(obj["date"].toString(), Qt::ISODate);
+            utcDateTime.setTimeSpec(Qt::UTC);  // Kerrotaan että aika on UTC:ssä
+            QDateTime localDateTime = utcDateTime.toLocalTime();  // Muunnetaan paikalliseksi ajaksi
+            QString formattedDate = localDateTime.toString("dd.MM.yyyy HH:mm");
             
             QString sum = obj["sum"].toString();
             QString type = obj["type"].toString();
@@ -480,12 +535,16 @@ void Login::updateTransactionButtons()
 // tässä metodissa tarkastetaan, että käyttäjä on syöttänyt summan, ja jos summa on syötetty.> verkkopyyntö> summan lähettäminen ja pyynnön vastauksen käsittely.
 void Login::makeWithdrawal()
 {
+    resetLogoutTimer();
     // Haetaan syötetty summa käyttöliittymästä (lineEdit_sum)
     QString amount = ui->lineEdit_sum->text();
     // Tarkistetaan, että käyttäjä on syöttänyt summan
     if (amount.isEmpty()) {
-        // Jos summa on tyhjä, ilmoitetaan käyttäjälle, että summa pitää syöttää
-        ui->withdrawllabel->setText("Enter amount!"); // Lopetetaan funktio, jos summa puuttuu
+        ui->withdrawllabel->setText("Please enter withdrawal amount");
+        return;
+    }
+    if (amount.toInt() <= 0) {
+        ui->withdrawllabel->setText("Amount must be greater than zero");
         return;
     }
     // Luodaan JSON-objekti, joka sisältää summan
@@ -506,26 +565,43 @@ void Login::makeWithdrawal()
 
 void Login::handleWithdrawalResponse(QNetworkReply *reply)
 {
-    QByteArray response_data = reply->readAll(); // Luetaan vastausdata
-    QJsonDocument jsonResponse = QJsonDocument::fromJson(response_data);
-    QJsonObject jsonObj = jsonResponse.object();
+    QByteArray response_data = reply->readAll();
+    qDebug() << "Withdrawal response:" << response_data;
+    qDebug() << "HTTP Status:" << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-    if (jsonObj.contains("message") && jsonObj["message"].toString() == "Withdrawal successful") { // Jos nosto onnistui
+    // Tarkista HTTP status code
+    int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    
+    if (httpStatus == 200) {
+        // Nosto onnistui
         ui->withdrawllabel->setText("Withdrawal successful!");
+        ui->lineEdit_sum->clear();
         
-        // Odotetaan 2 sekuntia ennen päävalikkoon palaamista
-        QTimer::singleShot(2000, this, [this]() {
+        // Näytä onnistumisilmoitus 2 sekuntia ja palaa päävalikkoon
+        QTimer::singleShot(2000, [this]() {
+            ui->withdrawllabel->clear();
             ui->stackedWidget->setCurrentIndex(MAIN_MENU_VIEW);
         });
-    } else { // Jos nosto epäonnistui
-        ui->withdrawllabel->setText("Withdrawal failed!");
+    } else {
+        // Tulkitse virheviesti vastauksesta
+        QJsonDocument jsonResponse = QJsonDocument::fromJson(response_data);
+        QString errorMessage = "Withdrawal failed";
+        
+        if (!jsonResponse.isNull() && jsonResponse.isObject()) {
+            QJsonObject jsonObj = jsonResponse.object();
+            if (jsonObj.contains("message")) {
+                errorMessage = jsonObj["message"].toString();
+            }
+        }
+        
+        ui->withdrawllabel->setText(errorMessage);
     }
 
-    reply->deleteLater(); // Vapautetaan vastaus
+    reply->deleteLater();
     disconnect(apiManager, &QNetworkAccessManager::finished, 0, 0);
+    resetLogoutTimer();
 }
 
-// hyväksytään nosto
 void Login::on_btn_confirm_clicked()
 {
     makeWithdrawal(); // Kutsutaan makeWithdrawal-funktiota
@@ -580,18 +656,23 @@ void Login::on_btnLogout_clicked()
         if (jsonObj.contains("message") && jsonObj["message"].toString() == "Logout successful") {
             ui->labelInfo->setText("You have been logged out!");
             
-            // Tyhjennetään kaikki kirjautumistiedot
+            // Tyhjennetään kaikki tiedot kuten ennenkin
+            clearUserInfo();
             authToken.clear();
             currentAccountType.clear();
             sessionCookie.clear();
             ui->text_card_number->clear();
             ui->text_pin->clear();
             
-            // Poistetaan cookie jar ja luodaan uusi
-            apiManager->setCookieJar(new QNetworkCookieJar(apiManager));
+            // Pysäytä logout timer
+            logoutTimer->stop();
             
-            // Palataan kirjautumisnäkymään
-            ui->stackedWidget->setCurrentIndex(LOGIN_VIEW);
+            // Luo uusi MainWindow ja näytä se
+            MainWindow *mainWindow = new MainWindow();
+            mainWindow->show();
+            
+            // Sulje tämä ikkuna
+            this->close();
         } else {
             ui->labelInfo->setText("Logout failed");
         }
@@ -603,10 +684,12 @@ void Login::on_btnLogout_clicked()
     });
 
     apiManager->post(request, QByteArray());
+    clearUserInfo();
 }
 
 void Login::on_btn_withdrawal_clicked() // painetaan nosto-nappia
 {
+    resetLogoutTimer();
     ui->stackedWidget->setCurrentIndex(4); // Withdrawal view (index 4)
 }
 
@@ -627,6 +710,7 @@ void Login::makeApiRequest(const QString &endpoint, const QString &method, const
 // Ohjelman lopetus
 void Login::on_btn_exit_clicked()
 {
+    clearUserInfo();
     // Tyhjennetään kaikki käyttäjädata
     authToken.clear();
     currentAccountType.clear();
@@ -651,5 +735,133 @@ void Login::on_btn_exit_clicked()
     
     // Suljetaan sovellus
     QCoreApplication::quit();
+}
+
+void Login::loadUserInfo() {
+    QString site_url = Environment::base_url() + "/atm/getUserData";
+    QNetworkRequest request(site_url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", "Bearer " + authToken.toUtf8());
+    request.setRawHeader("Cookie", sessionCookie);
+
+    qDebug() << "Requesting user data from:" << site_url;
+    qDebug() << "Using token:" << authToken;
+
+    disconnect(apiManager, &QNetworkAccessManager::finished, 0, 0);
+    connect(apiManager, &QNetworkAccessManager::finished, this, [this](QNetworkReply *reply) {
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray responseData = reply->readAll();
+            qDebug() << "User data response:" << responseData;
+            
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(responseData);
+            QJsonObject jsonObj = jsonResponse.object();
+            
+            // Päivitä käyttäjätiedot vain jos ne ovat saatavilla
+            if (jsonObj.contains("firstname") && jsonObj.contains("lastname")) {
+                currentUserFullName = jsonObj["firstname"].toString() + " " + jsonObj["lastname"].toString();
+                currentUserImage = jsonObj["pic_path"].toString();
+                
+                qDebug() << "User name:" << currentUserFullName;
+                qDebug() << "User image:" << currentUserImage;
+                
+                updateUserInfoDisplay();
+            }
+            
+            // Älä vaihda näkymää jos tämä on vain päivitys
+            if (ui->stackedWidget->currentIndex() == LOGIN_VIEW || 
+                ui->stackedWidget->currentIndex() == ACCOUNT_SELECT_VIEW) {
+                ui->stackedWidget->setCurrentIndex(MAIN_MENU_VIEW);
+            }
+        } else {
+            qDebug() << "Error fetching user data:" << reply->errorString();
+            // Virhetilanteessakin siirrytään päävalikkoon
+            ui->stackedWidget->setCurrentIndex(MAIN_MENU_VIEW);
+        }
+        reply->deleteLater();
+    });
+    apiManager->get(request);
+}
+void Login::updateUserInfoDisplay() 
+{
+    // Aseta käyttäjän nimi
+    if (!currentUserFullName.isEmpty()) {
+        ui->userNameLabel->setText(currentUserFullName);
+    }
+    
+    // Jos kuva on jo ladattu, käytä sitä
+    if (!userPixmap.isNull()) {
+        ui->userImageLabel->setPixmap(userPixmap);
+        return;
+    }
+    
+    // Lataa kuva vain jos sitä ei ole vielä ladattu
+    if (!currentUserImage.isEmpty() && currentUserImage != "NULL" && currentUserImage != "null") {
+        QString imageUrl = Environment::base_url() + "/public/" + currentUserImage;
+        QNetworkRequest request(imageUrl);
+        request.setRawHeader("Authorization", "Bearer " + authToken.toUtf8());
+        request.setRawHeader("Cookie", sessionCookie);
+        
+        disconnect(apiManager, &QNetworkAccessManager::finished, 0, 0);
+        connect(apiManager, &QNetworkAccessManager::finished, this, [this](QNetworkReply *reply) {
+            if (reply->error() == QNetworkReply::NoError) {
+                QByteArray imageData = reply->readAll();
+                if (!imageData.isEmpty()) {
+                    if (userPixmap.loadFromData(imageData)) {
+                        userPixmap = userPixmap.scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                        ui->userImageLabel->setPixmap(userPixmap);
+                    }
+                }
+            }
+            reply->deleteLater();
+        });
+        apiManager->get(request);
+    }
+}
+
+void Login::clearUserInfo() 
+{
+    currentUserFullName.clear();
+    currentUserImage.clear();
+    userPixmap = QPixmap();  // Tyhjennä tallennettu kuva
+    ui->userNameLabel->clear();
+    ui->userImageLabel->clear();
+}
+
+void Login::on_stackedWidget_currentChanged(int index)
+{
+    // Päivitä Back-napin tila näkymän vaihtuessa
+    bool backEnabled = (index != LOGIN_VIEW && index != MAIN_MENU_VIEW);
+    ui->btn_back->setEnabled(backEnabled);
+    
+    // Päivitä tyylit tilan mukaan
+    if (backEnabled) {
+        ui->btn_back->setStyleSheet("QPushButton { background-color: #2196F3; color: white; border-radius: 10px; padding: 10px; } QPushButton:hover { background-color: #1976D2; }");
+    } else {
+        ui->btn_back->setStyleSheet("QPushButton { background-color: #666666; color: white; border-radius: 10px; padding: 10px; }");
+    }
+    
+    // Nollaa withdrawal näkymän viesti kun sinne mennään
+    if (index == WITHDRAWAL_VIEW) {
+        ui->withdrawllabel->clear();
+        ui->lineEdit_sum->clear();
+    }
+    
+    // Poistetaan turha kuvan päivitys
+    // if (index == MAIN_MENU_VIEW) {
+    //     updateUserInfoDisplay();
+    // }
+}
+
+// Lisää resetLogoutTimer-funktio
+void Login::resetLogoutTimer()
+{
+    logoutTimer->start(30000);  // 30 sekuntia = 30000 ms
+}
+
+// Lisää autoLogout-funktio
+void Login::autoLogout()
+{
+    qDebug() << "Auto logout triggered after 3 minutes of inactivity";
+    on_btnLogout_clicked();
 }
 
