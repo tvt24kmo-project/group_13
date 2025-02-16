@@ -9,5 +9,5 @@ Environment::Environment() {}
 // @return QString: palvelimen täydellinen URL-osoite HTTPS-protokollalla
 QString Environment::base_url()
 {
-    return "http://192.168.20.206:3000";  // Palvelimen osoite ja portti
+    return "https://bank.sara.vehvilainen.cc:3000";  // Palvelimen osoite ja portti
 }
