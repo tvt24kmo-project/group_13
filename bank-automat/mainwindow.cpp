@@ -9,6 +9,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this); // Alustetaan käyttöliittymä. Tämä liittää UI-komponentit MainWindow-olioon.
     
+    // Asetetaan ikkuna maksimoituun tilaan
+    this->showMaximized();
+    
     // Ladataan ja asetetaan tervetulokuva resurssitiedostosta
     QPixmap originalPix(":/img/landing-picture.jpg");
     if (!originalPix.isNull()) {

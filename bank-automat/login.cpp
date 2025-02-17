@@ -23,6 +23,9 @@ Login::Login(QWidget *parent)
     logoutTimer = new QTimer(this);
     logoutTimer->setSingleShot(true);
     connect(logoutTimer, &QTimer::timeout, this, &Login::autoLogout);
+
+    // Asetetaan ikkuna maksimoituun tilaan
+    this->showMaximized();
 }
 
 Login::~Login()
@@ -607,9 +610,23 @@ void Login::on_btn_confirm_clicked()
     makeWithdrawal(); // Kutsutaan makeWithdrawal-funktiota
 }
 
-void Login::on_btn_back_clicked() // palaa takaisin
+void Login::on_btn_back_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(MAIN_MENU_VIEW); // Käytetään enum arvoa
+    // Jos ollaan Login-näkymässä, palataan MainWindow:hun
+    if (ui->stackedWidget->currentIndex() == LOGIN_VIEW) {
+        MainWindow *mainWindow = new MainWindow();
+        mainWindow->show();
+        this->close();
+        return;
+    }
+
+    // Jos ollaan kirjautuneena (token löytyy), palataan päävalikkoon
+    if (!authToken.isEmpty()) {
+        ui->stackedWidget->setCurrentIndex(MAIN_MENU_VIEW);
+    } else {
+        // Jos ei olla kirjautuneena, palataan kirjautumisnäkymään
+        ui->stackedWidget->setCurrentIndex(LOGIN_VIEW);
+    }
 }
 
 // Summien napit
@@ -830,7 +847,7 @@ void Login::clearUserInfo()
 void Login::on_stackedWidget_currentChanged(int index)
 {
     // Päivitä Back-napin tila näkymän vaihtuessa
-    bool backEnabled = (index != LOGIN_VIEW && index != MAIN_MENU_VIEW);
+    bool backEnabled = (index != MAIN_MENU_VIEW); // Poistetaan ACCOUNT_SELECT_VIEW erikoistapaus
     ui->btn_back->setEnabled(backEnabled);
     
     // Päivitä tyylit tilan mukaan
