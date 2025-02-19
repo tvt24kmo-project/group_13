@@ -26,6 +26,47 @@ Login::Login(QWidget *parent)
 
     // Asetetaan ikkuna maksimoituun tilaan
     this->showMaximized();
+
+    // Aseta yhtenäinen tyyli kaikille päänäkymän painikkeille
+    QString buttonStyle = 
+        "QPushButton { "
+        "   background-color: #2196F3; "
+        "   color: white; "
+        "   border-radius: 10px; "
+        "   padding: 10px; "
+        "   min-width: 80px; "
+        "} "
+        "QPushButton:hover { "
+        "   background-color: #1976D2; "
+        "}";
+
+    // Exit-painikkeelle oma punainen tyyli
+    QString exitButtonStyle = 
+        "QPushButton { "
+        "   background-color: #f44336; "
+        "   color: white; "
+        "   border-radius: 10px; "
+        "   padding: 10px; "
+        "   min-width: 80px; "
+        "} "
+        "QPushButton:hover { "
+        "   background-color: #d32f2f; "
+        "}";
+
+    // Aseta tyyli kaikille päänäkymän painikkeille
+    ui->btn_balance->setStyleSheet(buttonStyle);
+    ui->btn_withdrawal->setStyleSheet(buttonStyle);
+    ui->btn_transactions->setStyleSheet(buttonStyle);
+    ui->btnLogout->setStyleSheet(buttonStyle);
+    ui->btn_exit->setStyleSheet(exitButtonStyle);
+    ui->btn_credit->setStyleSheet(buttonStyle);
+    ui->btn_debit->setStyleSheet(buttonStyle);
+    ui->btnLogin->setStyleSheet(buttonStyle);
+    ui->btn_confirm->setStyleSheet(buttonStyle);
+    ui->btn_20->setStyleSheet(buttonStyle);
+    ui->btn_40->setStyleSheet(buttonStyle);
+    ui->btn_50->setStyleSheet(buttonStyle);
+    ui->btn_100->setStyleSheet(buttonStyle);
 }
 
 Login::~Login()
@@ -259,11 +300,13 @@ void Login::selectAccount(const QString &accountType)
 
 void Login::showTime()
 {
-    QTime time = QTime::currentTime(); // Haetaan nykyinen aika
-    QString text = time.toString("hh:mm"); // Muutetaan aika oikeaan muotoon
-    if ((time.second() % 2) == 0) // Vaihdetaan näytettävän ajan kolmas merkki
-        text[2] = ' '; // Tyhjennetään minuutin ja sekunnin välinen merkki
-    ui->lcd->display(text); // Näytetään aika LCD-näytöllä
+    QTime time = QTime::currentTime();
+    QString time_text = time.toString("HH:mm");
+    ui->timeLabel->setText(time_text);
+    
+    QDate date = QDate::currentDate();
+    QString date_text = date.toString("dd.MM.yyyy");
+    ui->dateLabel->setText(date_text);
 }
 
 // Nappi, joka siirtää näkymän luottoa varten
@@ -456,24 +499,24 @@ void Login::handleTransactionsResponse(QNetworkReply *reply)
             // Aseta päivämäärä
             QTableWidgetItem *dateItem = new QTableWidgetItem(formattedDate);
             dateItem->setTextAlignment(Qt::AlignCenter);
-            dateItem->setBackground(QBrush(QColor("#ffffff")));
+            dateItem->setBackground(QColor(255, 255, 255));  // Käytä QColor(r,g,b)
             ui->tableWidget_transactions->setItem(row, 0, dateItem);
             
             // Aseta transaktiotyyppi
             QTableWidgetItem *typeItem = new QTableWidgetItem(type);
             typeItem->setTextAlignment(Qt::AlignCenter);
-            typeItem->setBackground(QBrush(QColor("#ffffff")));
+            typeItem->setBackground(QColor(255, 255, 255));  // Käytä QColor(r,g,b)
             ui->tableWidget_transactions->setItem(row, 1, typeItem);
             
             // Aseta summa ja väritä sen mukaan
             QTableWidgetItem *sumItem = new QTableWidgetItem(sum + " €");
             sumItem->setTextAlignment(Qt::AlignCenter);
-            sumItem->setBackground(QBrush(QColor("#ffffff")));
+            sumItem->setBackground(QColor(255, 255, 255));  // Käytä QColor(r,g,b)
             
             if (sum.contains("-")) {
-                sumItem->setForeground(QBrush(QColor("#f44336"))); // Punainen
+                sumItem->setForeground(QColor(244, 67, 54));  // Punainen (#f44336)
             } else {
-                sumItem->setForeground(QBrush(QColor("#4CAF50"))); // Vihreä
+                sumItem->setForeground(QColor(76, 175, 80));  // Vihreä (#4CAF50)
             }
             
             ui->tableWidget_transactions->setItem(row, 2, sumItem);
@@ -519,19 +562,41 @@ void Login::updateTransactionButtons()
     // Päivitä "Previous" painikkeen tila
     ui->btn_prev_page->setEnabled(currentTransactionPage > 1);
     
-    // Jos painike on disabloitu, näytä se harmaana
+    // Yhtenäinen tyyli kaikille painikkeille
+    QString enabledStyle = 
+        "QPushButton { "
+        "   background-color: #2196F3; "
+        "   color: white; "
+        "   border-radius: 10px; "
+        "   padding: 10px; "
+        "   min-width: 80px; "
+        "} "
+        "QPushButton:hover { "
+        "   background-color: #1976D2; "
+        "}";
+
+    QString disabledStyle = 
+        "QPushButton { "
+        "   background-color: #CCCCCC; "
+        "   color: #666666; "
+        "   border-radius: 10px; "
+        "   padding: 10px; "
+        "   min-width: 80px; "
+        "}";
+
+    // Aseta tyylit Previous-painikkeelle
     if (currentTransactionPage > 1) {
-        ui->btn_prev_page->setStyleSheet("background-color: rgb(255, 255, 255);");
+        ui->btn_prev_page->setStyleSheet(enabledStyle);
     } else {
-        ui->btn_prev_page->setStyleSheet("background-color: rgb(200, 200, 200);");
+        ui->btn_prev_page->setStyleSheet(disabledStyle);
     }
     
-    // Päivitä "Next" painikkeen tila
+    // Aseta tyylit Next-painikkeelle
     ui->btn_next_page->setEnabled(hasNextPage);
     if (hasNextPage) {
-        ui->btn_next_page->setStyleSheet("background-color: rgb(255, 255, 255);");
+        ui->btn_next_page->setStyleSheet(enabledStyle);
     } else {
-        ui->btn_next_page->setStyleSheet("background-color: rgb(200, 200, 200);");
+        ui->btn_next_page->setStyleSheet(disabledStyle);
     }
 }
 
@@ -539,30 +604,53 @@ void Login::updateTransactionButtons()
 void Login::makeWithdrawal()
 {
     resetLogoutTimer();
-    // Haetaan syötetty summa käyttöliittymästä (lineEdit_sum)
+    // Haetaan syötetty summa käyttöliittymästä
     QString amount = ui->lineEdit_sum->text();
-    // Tarkistetaan, että käyttäjä on syöttänyt summan
+    
+    // Perustarkistukset
     if (amount.isEmpty()) {
         ui->withdrawllabel->setText("Please enter withdrawal amount");
         return;
     }
-    if (amount.toInt() <= 0) {
+    
+    bool ok;
+    int withdrawalAmount = amount.toInt(&ok);
+    if (!ok || withdrawalAmount <= 0) {
         ui->withdrawllabel->setText("Amount must be greater than zero");
         return;
     }
-    // Luodaan JSON-objekti, joka sisältää summan
+
+    // Tarkista että summa on mahdollista jakaa käytettävissä oleviin seteleihin (10,20,50,100,500)
+    bool isPossible = false;
+    for (int n500 = 0; n500 <= withdrawalAmount/500 && !isPossible; n500++) {
+        for (int n100 = 0; n100 <= (withdrawalAmount-n500*500)/100 && !isPossible; n100++) {
+            for (int n50 = 0; n50 <= (withdrawalAmount-n500*500-n100*100)/50 && !isPossible; n50++) {
+                for (int n20 = 0; n20 <= (withdrawalAmount-n500*500-n100*100-n50*50)/20 && !isPossible; n20++) {
+                    int remaining = withdrawalAmount - n500*500 - n100*100 - n50*50 - n20*20;
+                    if (remaining >= 0 && remaining % 10 == 0) {
+                        isPossible = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!isPossible) {
+        ui->withdrawllabel->setText("Amount not possible with available bills\n(10€, 20€, 50€, 100€, 500€)");
+        return;
+    }
+
+    // Jos tarkistukset menivät läpi, jatketaan normaalisti
     QJsonObject jsonObj;
-    jsonObj.insert("amount", amount); // Lisätään "amount" kenttä JSON-objektiin
-    // Rakennetaan URL-osoite, johon pyyntö lähetetään
+    jsonObj.insert("amount", amount);
     QString site_url = Environment::base_url() + "/atm/withdraw";
-    QNetworkRequest request(site_url); // Luodaan verkkopyyntö
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); // Määritetään sisällön tyyppi (JSON)
-    request.setRawHeader("Authorization", "Bearer " + authToken.toUtf8()); // Lisätään Bearer token
+    QNetworkRequest request(site_url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", "Bearer " + authToken.toUtf8());
     request.setRawHeader("Cookie", sessionCookie);
 
-    // Liitetään signaali (finished) ja slot (handleWithdrawalResponse) niin, että kun pyyntö on valmis, käsitellään vastaus
     connect(apiManager, &QNetworkAccessManager::finished, this, &Login::handleWithdrawalResponse);
-    // Lähetetään JSON-objekti POST-pyynnön mukana
     apiManager->post(request, QJsonDocument(jsonObj).toJson());
 }
 
@@ -850,11 +938,31 @@ void Login::on_stackedWidget_currentChanged(int index)
     bool backEnabled = (index != MAIN_MENU_VIEW); // Poistetaan ACCOUNT_SELECT_VIEW erikoistapaus
     ui->btn_back->setEnabled(backEnabled);
     
-    // Päivitä tyylit tilan mukaan
+    QString enabledStyle = 
+        "QPushButton { "
+        "   background-color: #2196F3; "
+        "   color: white; "
+        "   border-radius: 10px; "
+        "   padding: 10px; "
+        "   min-width: 80px; "
+        "} "
+        "QPushButton:hover { "
+        "   background-color: #1976D2; "
+        "}";
+
+    QString disabledStyle = 
+        "QPushButton { "
+        "   background-color: #CCCCCC; "
+        "   color: #666666; "
+        "   border-radius: 10px; "
+        "   padding: 10px; "
+        "   min-width: 80px; "
+        "}";
+    
     if (backEnabled) {
-        ui->btn_back->setStyleSheet("QPushButton { background-color: #2196F3; color: white; border-radius: 10px; padding: 10px; } QPushButton:hover { background-color: #1976D2; }");
+        ui->btn_back->setStyleSheet(enabledStyle);
     } else {
-        ui->btn_back->setStyleSheet("QPushButton { background-color: #666666; color: white; border-radius: 10px; padding: 10px; }");
+        ui->btn_back->setStyleSheet(disabledStyle);
     }
     
     // Nollaa withdrawal näkymän viesti kun sinne mennään
