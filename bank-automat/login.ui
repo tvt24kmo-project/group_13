@@ -835,19 +835,63 @@
             <number>10</number>
           </property>
           
-          <!-- Kello vasemmalla -->
+          <!-- Kello ja päivämäärä vasemmalla -->
           <item>
-            <widget class="QLCDNumber" name="lcd">
-              <property name="minimumSize">
-                <size>
-                  <width>120</width>
-                  <height>40</height>
-                </size>
+            <layout class="QHBoxLayout" name="timeLayout">
+              <property name="spacing">
+                <number>10</number>
               </property>
-              <property name="styleSheet">
-                <string>background-color: black; color: white; border-radius: 5px;</string>
-              </property>
-            </widget>
+              <item>
+                <widget class="QLabel" name="timeLabel">
+                  <property name="minimumSize">
+                    <size>
+                      <width>120</width>
+                      <height>40</height>
+                    </size>
+                  </property>
+                  <property name="styleSheet">
+                    <string>
+                      QLabel {
+                        background-color: black;
+                        color: white;
+                        border-radius: 5px;
+                        font-size: 20px;
+                        font-weight: bold;
+                        padding: 5px;
+                      }
+                    </string>
+                  </property>
+                  <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QLabel" name="dateLabel">
+                  <property name="minimumSize">
+                    <size>
+                      <width>180</width>
+                      <height>40</height>
+                    </size>
+                  </property>
+                  <property name="styleSheet">
+                    <string>
+                      QLabel {
+                        background-color: black;
+                        color: white;
+                        border-radius: 5px;
+                        font-size: 20px;
+                        font-weight: bold;
+                        padding: 5px;
+                      }
+                    </string>
+                  </property>
+                  <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                  </property>
+                </widget>
+              </item>
+            </layout>
           </item>
 
           <!-- Käyttäjätiedot keskellä -->
